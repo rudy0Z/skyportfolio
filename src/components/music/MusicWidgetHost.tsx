@@ -4,6 +4,35 @@ export type MusicWidgetStyle = "pinui" | "puffy" | "transistor" | "vinyl";
 
 const MUSIC_STYLE_KEY = "music-widget-style";
 
+interface Track {
+  title: string;
+  artist: string;
+  album: string;
+}
+
+const PLAYLIST: Track[] = [
+  {
+    title: "Terminal Frost",
+    artist: "Pink Floyd",
+    album: "A Momentary Lapse of Reason (1987)",
+  },
+  {
+    title: "Persephone",
+    artist: "Opeth",
+    album: "Sorceress (2016)",
+  },
+  {
+    title: "Shine On You Crazy Diamond",
+    artist: "Pink Floyd",
+    album: "Wish You Were Here (1975)",
+  },
+  {
+    title: "An Ending (Ascent)",
+    artist: "Brian Eno",
+    album: "Apollo: Atmospheres and Soundtracks",
+  },
+];
+
 export function MusicWidgetHost({
   defaultStyle = "pinui",
   externalStyle,
@@ -20,7 +49,17 @@ export function MusicWidgetHost({
   });
 
   const [isPlaying, setIsPlaying] = useState(false);
+  const [trackIdx, setTrackIdx] = useState(0);
   const activeStyle = externalStyle || style;
+  const currentTrack = PLAYLIST[trackIdx];
+
+  const handleNextTrack = () => {
+    setTrackIdx((prev) => (prev + 1) % PLAYLIST.length);
+  };
+
+  const handlePrevTrack = () => {
+    setTrackIdx((prev) => (prev - 1 + PLAYLIST.length) % PLAYLIST.length);
+  };
 
   const handleSelect = (s: MusicWidgetStyle) => {
     setStyle(s);
@@ -82,13 +121,37 @@ export function MusicWidgetHost({
         </button>
       </div>
 
-      {/* Track Info */}
-      <div className="text-center mb-3">
-        <div className="font-mono text-[9px] uppercase tracking-widest text-emerald-400">
-          STUDIO FREQUENCY // SOUNDTRACK
+      {/* Track Info & Next/Prev Controls */}
+      <div className="text-center mb-3 w-full">
+        <div className="font-mono text-[9px] uppercase tracking-widest text-emerald-400 flex items-center justify-center gap-2">
+          <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
+          <span>ON REPEAT // SPOTIFY STUDIO SESSIONS</span>
         </div>
-        <div className="font-serif text-[16px] text-white font-medium">
-          Brian Eno — An Ending (Ascent)
+        <div className="flex items-center justify-center gap-3 mt-1">
+          <button
+            type="button"
+            onClick={handlePrevTrack}
+            className="text-white/40 hover:text-white font-mono text-[12px] transition-colors"
+            title="Previous Track"
+          >
+            ◀
+          </button>
+          <div className="flex flex-col items-center max-w-[200px]">
+            <span className="font-serif text-[15px] text-white font-medium truncate">
+              {currentTrack.title}
+            </span>
+            <span className="font-mono text-[10.5px] text-white/50 truncate">
+              {currentTrack.artist} — {currentTrack.album}
+            </span>
+          </div>
+          <button
+            type="button"
+            onClick={handleNextTrack}
+            className="text-white/40 hover:text-white font-mono text-[12px] transition-colors"
+            title="Next Track"
+          >
+            ▶
+          </button>
         </div>
       </div>
 

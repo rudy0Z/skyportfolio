@@ -2,6 +2,8 @@ import { useEffect, useState } from "react";
 
 export function ExcavationCraterFooter() {
   const [copied, setCopied] = useState(false);
+  const [handleCopied, setHandleCopied] = useState(false);
+  const [activeSocial, setActiveSocial] = useState<string | null>(null);
   const [ignitionActive, setIgnitionActive] = useState(false);
   const [showCallModal, setShowCallModal] = useState(false);
   const [times, setTimes] = useState({ surat: "", sf: "", utc: "" });
@@ -33,9 +35,15 @@ export function ExcavationCraterFooter() {
   }, []);
 
   const handleCopyEmail = () => {
-    navigator.clipboard?.writeText("rudra.singh.design@gmail.com");
+    navigator.clipboard?.writeText("rudraksh.singhh@outlook.com");
     setCopied(true);
     setTimeout(() => setCopied(false), 2500);
+  };
+
+  const handleCopyHandle = () => {
+    navigator.clipboard?.writeText("@rudrakshsinghh");
+    setHandleCopied(true);
+    setTimeout(() => setHandleCopied(false), 2500);
   };
 
   const handleReturnToOrbit = () => {
@@ -216,50 +224,127 @@ export function ExcavationCraterFooter() {
             </button>
           </div>
 
-          {/* Communication HUD: Email Copy, Socials, Multi-Timezone Clocks */}
+          {/* Communication HUD: Unified @rudrakshsinghh Orbit Hub & Multi-Timezone Clocks */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {/* Direct Email & Social Telemetry */}
-            <div className="p-4 rounded-xl border border-white/10 bg-black/40 backdrop-blur-md flex flex-col justify-between">
-              <div>
-                <div className="font-mono text-[9px] uppercase tracking-wider text-white/40 mb-2">
-                  COMMUNICATION FREQUENCY
+            {/* Unified @rudrakshsinghh Social Orbit Transmitter */}
+            <div className="p-5 rounded-xl border border-white/10 bg-black/50 backdrop-blur-md flex flex-col justify-between relative overflow-hidden">
+              <div className="flex items-center justify-between mb-3">
+                <div className="font-mono text-[9px] uppercase tracking-wider text-white/40 flex items-center gap-1.5">
+                  <span className="h-1.5 w-1.5 rounded-full bg-cyan-400" />
+                  <span>COMMUNICATION TRANSMITTER</span>
                 </div>
+                <span className="font-mono text-[9px] text-white/40">FREQ // GLOBAL</span>
+              </div>
+
+              {/* Central Unified Handle Dock with Surrounding Orbital Constellation */}
+              <div className="relative py-4 flex flex-col items-center justify-center">
+                {/* Orbital Guide Ring */}
+                <div className="absolute inset-x-2 inset-y-1 rounded-full border border-dashed border-white/10 pointer-events-none -z-0" />
+
+                {/* Central Luminous Handle Pill */}
+                <button
+                  type="button"
+                  onClick={handleCopyHandle}
+                  className="group relative z-10 px-4 py-2 rounded-full bg-neutral-900 border border-white/20 hover:border-cyan-400/80 shadow-[0_0_20px_rgba(6,182,212,0.15)] flex items-center gap-2 transition-all hover:scale-105"
+                  title="Click to copy unified handle"
+                >
+                  <span className="h-2 w-2 rounded-full bg-cyan-400 animate-pulse" />
+                  <span className="font-mono text-[13px] font-bold text-white tracking-wide">
+                    @rudrakshsinghh
+                  </span>
+                  <span className="font-mono text-[10px] text-white/50 group-hover:text-cyan-300 transition-colors">
+                    {handleCopied ? "✓ COPIED" : "⧉"}
+                  </span>
+                </button>
+
+                {/* Surrounding Arranged Social Media Satellites */}
+                <div className="relative z-10 flex items-center justify-center gap-2.5 sm:gap-3 mt-4">
+                  {/* X / Twitter */}
+                  <a
+                    href="https://x.com/rudrakshsinghh"
+                    target="_blank"
+                    rel="noreferrer"
+                    onMouseEnter={() => setActiveSocial("x")}
+                    onMouseLeave={() => setActiveSocial(null)}
+                    className="h-9 w-9 rounded-full bg-white/5 hover:bg-white/20 border border-white/15 hover:border-white text-white flex items-center justify-center transition-all hover:scale-110 shadow-md font-bold text-[12px]"
+                    title="X (Twitter) // @rudrakshsinghh"
+                  >
+                    𝕏
+                  </a>
+
+                  {/* GitHub */}
+                  <a
+                    href="https://github.com/rudy0Z"
+                    target="_blank"
+                    rel="noreferrer"
+                    onMouseEnter={() => setActiveSocial("github")}
+                    onMouseLeave={() => setActiveSocial(null)}
+                    className="h-9 w-9 rounded-full bg-white/5 hover:bg-emerald-950/60 border border-white/15 hover:border-emerald-400 text-white flex items-center justify-center transition-all hover:scale-110 shadow-md font-mono text-[11px]"
+                    title="GitHub // rudy0Z"
+                  >
+                    gh
+                  </a>
+
+                  {/* LinkedIn */}
+                  <a
+                    href="https://linkedin.com/in/rudraksh-singh"
+                    target="_blank"
+                    rel="noreferrer"
+                    onMouseEnter={() => setActiveSocial("linkedin")}
+                    onMouseLeave={() => setActiveSocial(null)}
+                    className="h-9 w-9 rounded-full bg-white/5 hover:bg-sky-950/60 border border-white/15 hover:border-sky-400 text-white flex items-center justify-center transition-all hover:scale-110 shadow-md font-bold text-[11px]"
+                    title="LinkedIn // in/rudraksh-singh"
+                  >
+                    in
+                  </a>
+
+                  {/* Email */}
+                  <a
+                    href="mailto:rudraksh.singhh@outlook.com"
+                    onMouseEnter={() => setActiveSocial("mail")}
+                    onMouseLeave={() => setActiveSocial(null)}
+                    className="h-9 w-9 rounded-full bg-white/5 hover:bg-amber-950/60 border border-white/15 hover:border-amber-400 text-white flex items-center justify-center transition-all hover:scale-110 shadow-md text-[13px]"
+                    title="Direct Outlook Mail // rudraksh.singhh@outlook.com"
+                  >
+                    ✉
+                  </a>
+
+                  {/* ReadCV */}
+                  <a
+                    href="https://rudrakshsingh.page"
+                    target="_blank"
+                    rel="noreferrer"
+                    onMouseEnter={() => setActiveSocial("web")}
+                    onMouseLeave={() => setActiveSocial(null)}
+                    className="h-9 w-9 rounded-full bg-white/5 hover:bg-purple-950/60 border border-white/15 hover:border-purple-400 text-white flex items-center justify-center transition-all hover:scale-110 shadow-md font-mono text-[10px]"
+                    title="Live Domain // rudrakshsingh.page"
+                  >
+                    cv
+                  </a>
+                </div>
+
+                {/* Telemetry Route Descriptor */}
+                <div className="mt-3 font-mono text-[10px] text-white/50 text-center h-4">
+                  {activeSocial === "x" && <span className="text-white">ROUTE ──► x.com/rudrakshsinghh</span>}
+                  {activeSocial === "github" && <span className="text-emerald-300">ROUTE ──► github.com/rudy0Z</span>}
+                  {activeSocial === "linkedin" && <span className="text-sky-300">ROUTE ──► linkedin.com/in/rudraksh-singh</span>}
+                  {activeSocial === "mail" && <span className="text-amber-300">ROUTE ──► rudraksh.singhh@outlook.com</span>}
+                  {activeSocial === "web" && <span className="text-purple-300">ROUTE ──► rudrakshsingh.page</span>}
+                  {!activeSocial && <span>TRANSPONDER LOCKED // 5 SATELLITE CHANNELS</span>}
+                </div>
+              </div>
+
+              {/* Quick direct copy email strip */}
+              <div className="pt-2 border-t border-white/10 flex items-center justify-between font-mono text-[11px]">
+                <span className="text-white/40">Direct:</span>
                 <button
                   type="button"
                   onClick={handleCopyEmail}
-                  className="font-mono text-[13px] text-white hover:text-amber-300 transition-colors flex items-center gap-2 text-left"
+                  className="text-white hover:text-amber-300 transition-colors flex items-center gap-1.5"
                 >
-                  <span>rudra.singh.design@gmail.com</span>
-                  <span className="text-[11px] text-white/50">{copied ? "✓ COPIED" : "⧉"}</span>
+                  <span>rudraksh.singhh@outlook.com</span>
+                  <span className="text-[10px] text-white/50">{copied ? "✓" : "⧉"}</span>
                 </button>
-              </div>
-
-              {/* Socials */}
-              <div className="flex items-center gap-4 mt-4 pt-3 border-t border-white/10 font-mono text-[11px] text-white/60">
-                <a
-                  href="https://github.com/rudy0Z"
-                  target="_blank"
-                  rel="noreferrer"
-                  className="hover:text-white transition-colors"
-                >
-                  GitHub
-                </a>
-                <a
-                  href="https://linkedin.com"
-                  target="_blank"
-                  rel="noreferrer"
-                  className="hover:text-white transition-colors"
-                >
-                  LinkedIn
-                </a>
-                <a
-                  href="https://x.com"
-                  target="_blank"
-                  rel="noreferrer"
-                  className="hover:text-white transition-colors"
-                >
-                  X / Twitter
-                </a>
               </div>
             </div>
 
@@ -324,7 +409,7 @@ export function ExcavationCraterFooter() {
             </p>
             <div className="space-y-3 mb-6">
               <a
-                href="mailto:rudra.singh.design@gmail.com?subject=Product%20Architecture%20Inquiry"
+                href="mailto:rudraksh.singhh@outlook.com?subject=Product%20Architecture%20Inquiry"
                 className="w-full block py-3 text-center rounded-xl bg-white text-black font-semibold text-[13px] hover:bg-amber-300 transition-colors"
               >
                 Dispatch Email Briefing →
@@ -334,7 +419,7 @@ export function ExcavationCraterFooter() {
                 onClick={handleCopyEmail}
                 className="w-full py-2.5 rounded-xl border border-white/20 font-mono text-[11px] text-white/80 hover:bg-white/5"
               >
-                {copied ? "✓ Copied to Clipboard" : "Copy Direct Email (rudra.singh.design@gmail.com)"}
+                {copied ? "✓ Copied to Clipboard" : "Copy Direct Email (rudraksh.singhh@outlook.com)"}
               </button>
             </div>
           </div>

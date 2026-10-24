@@ -40,10 +40,41 @@ const TIMELINE = [
 ];
 
 const FILM_SLIDES = [
-  { id: "s1", title: "Canopy Shadow", exif: "35mm · f/2.8 · ISO 100", loc: "Monsoon Wetland Passage" },
-  { id: "s2", title: "Riverboats at Dawn", exif: "50mm · f/1.8 · ISO 200", loc: "Tapi River Bank" },
-  { id: "s3", title: "Solitary Egret", exif: "85mm · f/4.0 · ISO 160", loc: "Estuary Wildlife Refuge" },
-  { id: "s4", title: "Stratosphere Kite", exif: "24mm · f/5.6 · ISO 100", loc: "Coastal Horizon Wind" },
+  {
+    id: "s1",
+    title: "Tunnel of Trees",
+    exif: "35mm · f/2.8 · ISO 100",
+    loc: "Monsoon Wetland Passage",
+    src: "https://images.unsplash.com/photo-1447752875215-b2761acb3c5d?q=80&w=800&auto=format&fit=crop",
+  },
+  {
+    id: "s2",
+    title: "Riverboats at Dawn",
+    exif: "50mm · f/1.8 · ISO 200",
+    loc: "Tapi River Bank",
+    src: "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?q=80&w=800&auto=format&fit=crop",
+  },
+  {
+    id: "s3",
+    title: "Solitary Egret",
+    exif: "85mm · f/4.0 · ISO 160",
+    loc: "Estuary Wildlife Refuge",
+    src: "https://images.unsplash.com/photo-1518791841217-8f162f1e1131?q=80&w=800&auto=format&fit=crop",
+  },
+  {
+    id: "s4",
+    title: "Stratosphere Kite",
+    exif: "24mm · f/5.6 · ISO 100",
+    loc: "Coastal Horizon Wind",
+    src: "https://images.unsplash.com/photo-1501785888041-af3ef285b470?q=80&w=800&auto=format&fit=crop",
+  },
+  {
+    id: "s5",
+    title: "Lunar Horizon",
+    exif: "200mm · f/8.0 · ISO 400",
+    loc: "Night Sky Observation",
+    src: "https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?q=80&w=800&auto=format&fit=crop",
+  },
 ];
 
 const TOOL_GROUPS = [
@@ -80,20 +111,26 @@ export function AboutPage({
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-start">
         {/* Left Column: Portrait & Switchable Music Player */}
         <div className="lg:col-span-5 lg:sticky lg:top-24 space-y-6">
-          {/* Portrait Placeholder Card */}
+          {/* Portrait Paper Card with Real Cutout */}
           <div className="p-4 rounded-2xl border border-white/15 bg-neutral-900/80 backdrop-blur-xl shadow-2xl">
-            <div className="relative aspect-[4/5] w-full rounded-xl bg-gradient-to-b from-neutral-800 to-neutral-950 flex flex-col items-center justify-center p-6 text-center border border-white/5">
-              <svg viewBox="0 0 120 120" className="w-24 h-24 mb-4 text-white/30">
-                <circle cx="60" cy="45" r="25" fill="none" stroke="currentColor" strokeWidth="2" />
-                <path d="M 20 105 C 20 75, 40 68, 60 68 C 80 68, 100 75, 100 105" fill="none" stroke="currentColor" strokeWidth="2" />
-              </svg>
-              <span className="font-serif text-[20px] font-medium text-white">Rudraksh Singh</span>
-              <span className="font-mono text-[10px] uppercase tracking-widest text-amber-300 mt-1">
-                SYSTEMS &amp; PRODUCT DESIGNER
-              </span>
-              <span className="font-mono text-[9px] text-white/40 mt-3">
-                SURAT, INDIA · 21°N
-              </span>
+            <div className="relative aspect-[4/5] w-full rounded-xl bg-gradient-to-b from-neutral-800 to-neutral-950 flex flex-col items-center justify-end p-6 text-center border border-white/5 overflow-hidden">
+              <img
+                src="/portrait-cutout.png"
+                alt="Rudraksh Singh"
+                className="absolute inset-0 w-full h-full object-cover object-top filter contrast-[1.05]"
+                onError={(e) => {
+                  (e.target as HTMLElement).style.display = "none";
+                }}
+              />
+              <div className="relative z-10 w-full p-3 rounded-lg bg-black/60 backdrop-blur-md border border-white/10">
+                <span className="font-serif text-[18px] font-medium text-white block">Rudraksh Singh</span>
+                <span className="font-mono text-[9.5px] uppercase tracking-widest text-amber-300 block mt-0.5">
+                  SYSTEMS &amp; PRODUCT DESIGNER
+                </span>
+                <span className="font-mono text-[9px] text-white/50 block mt-1">
+                  SURAT, INDIA · 21°N
+                </span>
+              </div>
             </div>
             <div className="mt-3 flex items-center justify-between font-mono text-[9.5px] uppercase tracking-wider text-white/50 px-1">
               <span>PLATE · PORTRAIT // 2026</span>
@@ -134,33 +171,79 @@ export function AboutPage({
             <h3 className="font-serif text-[24px] font-medium text-white mb-6">
               Snapshots Outside the Screen
             </h3>
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
               {FILM_SLIDES.map((slide) => (
                 <div
                   key={slide.id}
                   onClick={() => setActiveSlide(slide.id)}
-                  className="group relative p-3 rounded-xl border border-white/15 bg-white/5 hover:bg-white/10 transition-all cursor-pointer"
+                  className="group relative p-3 rounded-xl border border-white/15 bg-white/5 hover:bg-white/10 transition-all cursor-pointer hover:-translate-y-1"
                 >
-                  {/* Film Slide Perforated Frame */}
-                  <div className="aspect-[4/3] rounded bg-black/70 border border-white/10 flex flex-col items-center justify-center p-3 text-center mb-2">
-                    <span className="font-mono text-[12px] text-white/40 group-hover:text-amber-300 transition-colors">
-                      [35MM SLIDE]
-                    </span>
-                    <span className="font-sans text-[13px] text-white font-medium mt-1">
-                      {slide.title}
-                    </span>
+                  {/* Film Slide Perforated Frame with Real Image */}
+                  <div className="relative aspect-[4/3] rounded-lg overflow-hidden bg-black/70 border border-white/10 mb-2.5">
+                    <img
+                      src={slide.src}
+                      alt={slide.title}
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end p-2.5">
+                      <span className="font-mono text-[9px] uppercase tracking-wider text-amber-300">
+                        CLICK TO INSPECT FRAME ↗
+                      </span>
+                    </div>
                   </div>
-                  <div className="font-mono text-[8.5px] uppercase tracking-wider text-white/50 flex justify-between">
+                  <div className="font-sans text-[13px] text-white font-medium truncate">
+                    {slide.title}
+                  </div>
+                  <div className="font-mono text-[8.5px] uppercase tracking-wider text-white/50 flex justify-between mt-1">
                     <span>{slide.exif}</span>
-                    <span>{slide.id.toUpperCase()}</span>
+                    <span className="text-amber-400">{slide.id.toUpperCase()}</span>
                   </div>
-                  <div className="font-sans text-[10px] text-white/40 truncate mt-0.5">
+                  <div className="font-sans text-[10.5px] text-white/40 truncate mt-0.5">
                     {slide.loc}
                   </div>
                 </div>
               ))}
             </div>
           </div>
+
+          {/* Fullscreen Snapshot Inspection Modal */}
+          {activeSlide && (() => {
+            const slide = FILM_SLIDES.find((s) => s.id === activeSlide);
+            if (!slide) return null;
+            return (
+              <div
+                className="fixed inset-0 z-[120] flex items-center justify-center bg-black/90 backdrop-blur-2xl p-4 sm:p-8"
+                onClick={() => setActiveSlide(null)}
+              >
+                <div
+                  className="relative max-w-3xl w-full rounded-2xl border border-white/20 bg-neutral-950 p-6 shadow-2xl"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <div className="flex items-center justify-between pb-3 border-b border-white/10 mb-4">
+                    <span className="font-mono text-[10px] uppercase tracking-wider text-amber-300">
+                      35MM FRAME INSPECTION // {slide.id.toUpperCase()}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => setActiveSlide(null)}
+                      className="font-mono text-[14px] text-white/50 hover:text-white"
+                    >
+                      ✕ ESC
+                    </button>
+                  </div>
+                  <div className="relative aspect-[16/10] w-full rounded-xl overflow-hidden bg-black mb-4">
+                    <img src={slide.src} alt={slide.title} className="w-full h-full object-contain" />
+                  </div>
+                  <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 font-mono text-[11px] text-white/70">
+                    <div>
+                      <span className="text-white font-bold">{slide.title}</span> — <span>{slide.loc}</span>
+                    </div>
+                    <div className="text-amber-300 font-semibold">{slide.exif}</div>
+                  </div>
+                </div>
+              </div>
+            );
+          })()}
 
           {/* Experience Timeline */}
           <div className="p-6 rounded-2xl border border-white/10 bg-neutral-900/60 backdrop-blur-md">
