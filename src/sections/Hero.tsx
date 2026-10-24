@@ -1,29 +1,25 @@
 "use client";
 
-/**
- * Hero — the framing container.
- *
- * The hero does not draw a scene. It stages one:
- *
- *   .hero-art-slot   ← your editorial image/video cutout goes here. It is
- *                       positioned over the plateau's surface, clipped to the
- *                       island silhouette, and graded by the sky (the same
- *                       --grade-* variables the clouds use).
- *   <Island/>        ← the atmospheric plateau: soft silhouette, dissolving
- *                       edges, mist at the rim. No illustration.
- *
- * Scroll drives one CSS variable (`--p`) on the sticky stage; all motion is
- * transform/opacity, so the reveal stays off the paint path.
- */
-
-import { useEffect, useRef } from "react";
-import { Island } from "./Island";
+import { useEffect, useRef, useState } from "react";
+import { HeroIsland } from "./HeroIsland";
 import { momentLabel } from "@/lib/timeOfDay";
 import { useSkyTime } from "@/lib/useTimeOfDay";
+import { Link } from "@/router/Router";
 
-export function Hero() {
+interface HeroProps {
+  showLayerA?: boolean;
+  showLayerB?: boolean;
+  wireframe?: boolean;
+}
+
+export function Hero({
+  showLayerA = true,
+  showLayerB = true,
+  wireframe = false,
+}: HeroProps) {
   const sectionRef = useRef<HTMLElement>(null);
   const stageRef = useRef<HTMLDivElement>(null);
+  const [scrollProgress, setScrollProgress] = useState(0);
   const t = useSkyTime();
 
   useEffect(() => {
@@ -37,6 +33,7 @@ export function Hero() {
       const rect = section.getBoundingClientRect();
       const travel = section.offsetHeight - window.innerHeight;
       const p = Math.min(1, Math.max(0, -rect.top / Math.max(1, travel)));
+      setScrollProgress(p);
       stage.style.setProperty("--p", p.toFixed(4));
       document.documentElement.setAttribute("data-scrolled", p > 0.04 ? "true" : "false");
     };
@@ -56,22 +53,16 @@ export function Hero() {
   return (
     <section ref={sectionRef} className="hero" data-hud-section="Home">
       <div ref={stageRef} className="hero-stage">
-        {/* ── the plateau + mist ─────────────────────────────────────── */}
+        {/* ── TWO-LAYER FLOATING ISLAND PLACEHOLDER SVG ────────────────── */}
         <div className="hero-island-wrap">
           <div className="hero-island">
-            <Island />
+            <HeroIsland
+              scrollProgress={scrollProgress}
+              showLayerA={showLayerA}
+              showLayerB={showLayerB}
+              wireframe={wireframe}
+            />
           </div>
-        </div>
-
-        {/*
-          ── editorial art slot ──────────────────────────────────────────
-          This is the seam for the real illustration: a transparent PNG or a
-          looping video cutout of the designer at the desk. Position it over
-          the plateau surface; the wrapper already masks it to the island and
-          carries the same light grading as the sky.
-        */}
-        <div className="hero-art-slot" data-slot="hero-art">
-          {/* Replace this node with <img> / <video> when the art is ready. */}
         </div>
 
         {/* ── copy ────────────────────────────────────────────────────── */}
@@ -95,18 +86,25 @@ export function Hero() {
           </p>
 
           <div className="hero-actions">
-            <a href="#work" className="btn btn-primary">
+            <a
+              href="#work"
+              onClick={(e) => {
+                e.preventDefault();
+                document.getElementById("work")?.scrollIntoView({ behavior: "smooth" });
+              }}
+              className="btn btn-primary"
+            >
               Selected work
             </a>
-            <a href="#about" className="btn btn-ghost">
-              About
-            </a>
+            <Link href="/about" className="btn btn-ghost">
+              About studio
+            </Link>
           </div>
         </div>
 
         <div className="hero-hint" aria-hidden>
           <span className="hero-hint-line" />
-          <span className="hero-hint-text">Scroll to lift the field</span>
+          <span className="hero-hint-text">Scroll to reveal underside thrusters &amp; mech keel</span>
         </div>
       </div>
     </section>
