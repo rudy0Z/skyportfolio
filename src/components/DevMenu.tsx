@@ -77,6 +77,7 @@ export function DevMenu({
     { path: "/projects", label: "Projects (Flight Log)" },
     { path: "/journal", label: "Journal (Field Notes)" },
     { path: "/resume", label: "Resume (Telemetry)" },
+    { path: "/lab", label: "🧪 Originkit Lab (Shaders & Button)" },
     { path: "/404", label: "404 (Lost Frequency Radio)" },
     { path: "/case/sentinel", label: "Case: Sentinel" },
     { path: "/case/lokai", label: "Case: LokAI" },

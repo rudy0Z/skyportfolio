@@ -6,6 +6,7 @@ export type RoutePath =
   | "/projects"
   | "/journal"
   | "/resume"
+  | "/lab"
   | "/404"
   | "/case/sentinel"
   | "/case/lokai"
@@ -59,6 +60,7 @@ function parseLocation(): { path: RoutePath; params: URLSearchParams } {
     "/projects",
     "/journal",
     "/resume",
+    "/lab",
     "/404",
     "/case/sentinel",
     "/case/lokai",

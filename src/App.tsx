@@ -21,6 +21,7 @@ import { JournalPage } from "@/pages/JournalPage";
 import { ResumePage } from "@/pages/ResumePage";
 import { NotFoundPage } from "@/pages/NotFoundPage";
 import { CaseStudyPage } from "@/pages/CaseStudyPage";
+import { LabPage } from "@/pages/LabPage";
 import { setSkyTime } from "@/lib/useTimeOfDay";
 
 const VARIANT_KEY = "sky-variant";
@@ -144,6 +145,8 @@ function PortfolioContent() {
             <ExcavationCraterFooter />
           </>
         )}
+
+        {path === "/lab" && <LabPage />}
 
         {path === "/404" && (
           <>
