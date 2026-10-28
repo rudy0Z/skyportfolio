@@ -23,3 +23,6 @@ dist-ssr
 *.sln
 *.sw?
 *.tsbuildinfo
+
+# QA visual regression renders
+qa/
