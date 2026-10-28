@@ -150,3 +150,5 @@ export function scenarioToTimeOfDay(scenario: string): TimeOfDay {
 export function detectTimeOfDay(): TimeOfDay {
   return phaseAt(localNow());
 }
+
+export { wrapHours } from "./color";

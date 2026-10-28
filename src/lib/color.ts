@@ -114,6 +114,8 @@ export function mix(a: OKLCH, b: OKLCH, t: number): OKLCH {
   };
 }
 
+export const mixOklch = mix;
+
 /** Mix toward a target by perceptual "weight" — convenience for tints. */
 export const tint = (base: OKLCH, target: OKLCH, amount: number) => mix(base, target, clamp(amount));
 

@@ -125,6 +125,7 @@ export interface GlideOptions {
    */
   omega?: number;
   mode?: SyncMode;
+  duration?: number;
 }
 
 /** Glide to `t` the short way round the dial. Retargets smoothly mid-flight. */
