@@ -5,9 +5,14 @@ import {
   EmberglowHorizon,
   GlimmerVale,
   Aetherglint,
+  MoonpetalMeadow,
+  BluebellPass,
+  MoonlitPetals,
+  BloomingFlower,
+  StillSunsetMeadow,
 } from "@/components/originkit";
 
-type LabTab = "button" | "horizon" | "vale" | "aether";
+type LabTab = "button" | "horizon" | "vale" | "aether" | "meadow" | "bluebell" | "petals" | "bloom" | "sunset";
 
 export function LabPage() {
   const [activeTab, setActiveTab] = useState<LabTab>("button");
@@ -61,61 +66,32 @@ export function LabPage() {
 
         {/* Tab Switcher Pills */}
         <div className="flex items-center gap-2 p-1.5 rounded-xl border border-white/10 bg-black/40 backdrop-blur-md mb-8 overflow-x-auto">
-          <button
-            type="button"
-            onClick={() => setActiveTab("button")}
-            className={`px-4 py-2 rounded-lg font-mono text-xs uppercase tracking-wider transition-all flex items-center gap-2 whitespace-nowrap ${
-              activeTab === "button"
-                ? "bg-amber-500 text-black font-bold shadow-[0_0_15px_rgba(245,158,11,0.3)]"
-                : "text-white/60 hover:text-white hover:bg-white/5"
-            }`}
-          >
-            <span>✦</span>
-            <span>Starfield Button</span>
-            <span className="text-[10px] opacity-70">(Motion + Canvas)</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => setActiveTab("horizon")}
-            className={`px-4 py-2 rounded-lg font-mono text-xs uppercase tracking-wider transition-all flex items-center gap-2 whitespace-nowrap ${
-              activeTab === "horizon"
-                ? "bg-amber-500 text-black font-bold shadow-[0_0_15px_rgba(245,158,11,0.3)]"
-                : "text-white/60 hover:text-white hover:bg-white/5"
-            }`}
-          >
-            <span>🌅</span>
-            <span>Emberglow Horizon</span>
-            <span className="text-[10px] opacity-70">(Sunset Shader)</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => setActiveTab("vale")}
-            className={`px-4 py-2 rounded-lg font-mono text-xs uppercase tracking-wider transition-all flex items-center gap-2 whitespace-nowrap ${
-              activeTab === "vale"
-                ? "bg-amber-500 text-black font-bold shadow-[0_0_15px_rgba(245,158,11,0.3)]"
-                : "text-white/60 hover:text-white hover:bg-white/5"
-            }`}
-          >
-            <span>🌼</span>
-            <span>Glimmer Vale</span>
-            <span className="text-[10px] opacity-70">(3D Daisy Ridges)</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => setActiveTab("aether")}
-            className={`px-4 py-2 rounded-lg font-mono text-xs uppercase tracking-wider transition-all flex items-center gap-2 whitespace-nowrap ${
-              activeTab === "aether"
-                ? "bg-amber-500 text-black font-bold shadow-[0_0_15px_rgba(245,158,11,0.3)]"
-                : "text-white/60 hover:text-white hover:bg-white/5"
-            }`}
-          >
-            <span>🌾</span>
-            <span>Aetherglint</span>
-            <span className="text-[10px] opacity-70">(Prairie Grass Wind)</span>
-          </button>
+          {[
+            { id: "button", label: "Starfield Button", icon: "✦", badge: "Motion + Canvas" },
+            { id: "horizon", label: "Emberglow Horizon", icon: "🌅", badge: "Sunset Shader" },
+            { id: "vale", label: "Glimmer Vale", icon: "🌼", badge: "3D Daisy Ridges" },
+            { id: "aether", label: "Aetherglint", icon: "🌾", badge: "Prairie Wind" },
+            { id: "meadow", label: "Moonpetal Meadow", icon: "🌸", badge: "Botanical Flora" },
+            { id: "bluebell", label: "Bluebell Pass", icon: "🌌", badge: "Night Bloom Pass" },
+            { id: "petals", label: "Moonlit Petals", icon: "🌙", badge: "Backlit Canopy" },
+            { id: "bloom", label: "Blooming Flower", icon: "🌺", badge: "Spring Bloom 3D" },
+            { id: "sunset", label: "Still Sunset Meadow", icon: "🧱", badge: "Voxel Prairie" },
+          ].map((tab) => (
+            <button
+              key={tab.id}
+              type="button"
+              onClick={() => setActiveTab(tab.id as LabTab)}
+              className={`px-3.5 py-2 rounded-lg font-mono text-xs uppercase tracking-wider transition-all flex items-center gap-1.5 whitespace-nowrap ${
+                activeTab === tab.id
+                  ? "bg-amber-500 text-black font-bold shadow-[0_0_15px_rgba(245,158,11,0.3)]"
+                  : "text-white/60 hover:text-white hover:bg-white/5"
+              }`}
+            >
+              <span>{tab.icon}</span>
+              <span>{tab.label}</span>
+              <span className="text-[10px] opacity-70">({tab.badge})</span>
+            </button>
+          ))}
         </div>
 
         {/* ============================================================== */}
@@ -191,97 +167,82 @@ export function LabPage() {
                       type="text"
                       value={btnLabel}
                       onChange={(e) => setBtnLabel(e.target.value)}
-                      className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/15 text-white font-mono text-xs focus:outline-none focus:border-amber-400"
+                      className="w-full bg-white/5 border border-white/15 rounded-lg px-3 py-2 text-white font-mono text-xs focus:outline-none focus:border-amber-400"
                     />
                   </div>
 
                   <div>
                     <label className="block text-white/60 mb-1.5 uppercase text-[10px]">
-                      Glow &amp; Beam Color
+                      Theme Color Preset
                     </label>
                     <div className="grid grid-cols-4 gap-2">
                       {[
-                        { name: "Amber", hex: "#FC731C" },
-                        { name: "Cyan", hex: "#00F0FF" },
-                        { name: "Violet", hex: "#A855F7" },
-                        { name: "Emerald", hex: "#10B981" },
-                      ].map((c) => (
+                        { color: "#FC731C", name: "Amber" },
+                        { color: "#00F0FF", name: "Cyan" },
+                        { color: "#A855F7", name: "Purple" },
+                        { color: "#10B981", name: "Emerald" },
+                      ].map((item) => (
                         <button
-                          key={c.hex}
+                          key={item.color}
                           type="button"
-                          onClick={() => setBtnColor(c.hex)}
-                          className={`p-2 rounded border text-center transition-all ${
-                            btnColor === c.hex
-                              ? "border-white bg-white/20 text-white font-bold"
-                              : "border-white/10 bg-white/5 text-white/60 hover:text-white"
+                          onClick={() => setBtnColor(item.color)}
+                          className={`h-8 rounded-lg border flex items-center justify-center transition-all ${
+                            btnColor === item.color
+                              ? "border-white scale-105"
+                              : "border-white/20 opacity-70 hover:opacity-100"
                           }`}
-                        >
-                          <div
-                            className="h-3 w-3 rounded-full mx-auto mb-1"
-                            style={{ backgroundColor: c.hex }}
-                          />
-                          <span className="text-[9px] block">{c.name}</span>
-                        </button>
+                          style={{ backgroundColor: item.color }}
+                          title={item.name}
+                        />
                       ))}
                     </div>
                   </div>
                 </div>
               </div>
 
-              <div className="mt-8 pt-4 border-t border-white/10 font-mono text-[10px] text-white/40 space-y-1">
-                <div>ENGINE: Canvas Pixel Grid + Motion Path</div>
-                <div>FRAME RATE: 60 FPS Target</div>
-                <div>BEAM DIRECTION: Counter-Clockwise (CCW)</div>
+              <div className="pt-6 border-t border-white/10 text-white/40 font-mono text-[10px] leading-relaxed">
+                Source: Originkit Cosmic Primitive · Built with Framer Motion, HTML5 Canvas particle stars &amp; radiant sweep beam.
               </div>
             </div>
           </div>
         )}
 
         {/* ============================================================== */}
-        {/* TAB 2: EMBERGLOW HORIZON SHADER SHOWCASE                       */}
+        {/* TAB 2: EMBERGLOW HORIZON SHOWCASE                              */}
         {/* ============================================================== */}
         {activeTab === "horizon" && (
           <div className="space-y-6">
             <div className="rounded-2xl border border-white/10 bg-black/80 overflow-hidden relative shadow-2xl">
               <div className="absolute top-4 left-4 z-20 font-mono text-[10px] uppercase tracking-widest text-amber-300 bg-black/60 px-3 py-1 rounded-full border border-amber-500/30 backdrop-blur-md">
-                EMBERGLOW HORIZON // SUNSET &amp; DUSK SHADER (AMBERVESPER)
+                EMBERGLOW HORIZON // LOW-ANGLE SUNSET SHADER (PITCH 114°, HORIZON 80%)
               </div>
 
-              {/* WebGL2 AmberVesper / Emberglow Canvas */}
-              <div className="w-full h-[540px] relative">
+              {/* WebGL2 AmberVesper Canvas */}
+              <div className="w-full h-[520px] relative">
                 <EmberglowHorizon
-                  advanced={{
-                    horizon: horizonY,
-                    sunX: sunXPos,
-                    rippleSpeed: rippleSpeed,
-                    shimmer: 12,
-                    heatWave: 10,
-                  }}
+                  speed={rippleSpeed}
                   style={{ width: "100%", height: "100%" }}
                 />
               </div>
 
-              {/* Bottom Interactive HUD Bar */}
+              {/* Real-time controls footer */}
               <div className="p-4 bg-neutral-950/90 border-t border-white/10 flex flex-wrap items-center justify-between gap-4 font-mono text-xs">
                 <div className="flex items-center gap-6">
-                  <div>
-                    <span className="text-white/40 block text-[9px] uppercase">
-                      Horizon Height ({horizonY}%)
-                    </span>
+                  <div className="flex items-center gap-2">
+                    <span className="text-white/50 text-[10px] uppercase">Horizon Y:</span>
                     <input
                       type="range"
-                      min={50}
+                      min={40}
                       max={95}
                       value={horizonY}
                       onChange={(e) => setHorizonY(Number(e.target.value))}
                       className="w-28 accent-amber-500 cursor-pointer"
                     />
+                    <span className="text-amber-400 w-8">{horizonY}%</span>
                   </div>
 
-                  <div>
-                    <span className="text-white/40 block text-[9px] uppercase">
-                      Sun X ({sunXPos}%)
-                    </span>
+                  <div className="flex items-center gap-2">
+                    <span className="text-white/50 text-[10px] uppercase">Sun Azimuth X:</span>
                     <input
                       type="range"
                       min={10}
@@ -290,12 +251,11 @@ export function LabPage() {
                       onChange={(e) => setSunXPos(Number(e.target.value))}
                       className="w-28 accent-amber-500 cursor-pointer"
                     />
+                    <span className="text-amber-400 w-8">{sunXPos}%</span>
                   </div>
 
-                  <div>
-                    <span className="text-white/40 block text-[9px] uppercase">
-                      Ripple Speed ({rippleSpeed})
-                    </span>
+                  <div className="flex items-center gap-2">
+                    <span className="text-white/50 text-[10px] uppercase">Ripple Hz:</span>
                     <input
                       type="range"
                       min={10}
@@ -313,7 +273,6 @@ export function LabPage() {
               </div>
             </div>
 
-            {/* Architectural note answering user question */}
             <div className="rounded-xl border border-amber-500/20 bg-amber-950/20 p-5 text-amber-200/90 font-mono text-xs leading-relaxed">
               <span className="font-bold text-amber-400 block mb-1">
                 ✦ ARCHITECTURAL INSIGHT — THE HORIZON GEOMETRY:
@@ -332,12 +291,9 @@ export function LabPage() {
               <div className="absolute top-4 left-4 z-20 font-mono text-[10px] uppercase tracking-widest text-violet-300 bg-black/60 px-3 py-1 rounded-full border border-violet-500/30 backdrop-blur-md">
                 GLIMMER VALE // PROCEDURAL 3D TERRAIN RIDGES &amp; BIG DAISIES
               </div>
-
-              {/* WebGL2 GlimmerVale Canvas */}
               <div className="w-full h-[540px] relative">
                 <GlimmerVale style={{ width: "100%", height: "100%" }} />
               </div>
-
               <div className="p-4 bg-neutral-950/90 border-t border-white/10 flex items-center justify-between font-mono text-xs text-white/60">
                 <span>Features: 72,000 Ridge Points · Procedural Big Daisies · Wind Sway · Chromatic Aberration Fringe</span>
                 <span className="text-violet-400">WebGL2 Native</span>
@@ -355,15 +311,112 @@ export function LabPage() {
               <div className="absolute top-4 left-4 z-20 font-mono text-[10px] uppercase tracking-widest text-emerald-300 bg-black/60 px-3 py-1 rounded-full border border-emerald-500/30 backdrop-blur-md">
                 AETHERGLINT // PRAIRIE GRASS BLADES &amp; FLOWER STALKS WIND SIMULATION
               </div>
-
-              {/* WebGL2 Aetherglint Canvas */}
               <div className="w-full h-[540px] relative">
                 <Aetherglint style={{ width: "100%", height: "100%" }} />
               </div>
-
               <div className="p-4 bg-neutral-950/90 border-t border-white/10 flex items-center justify-between font-mono text-xs text-white/60">
                 <span>Features: Vector Wind Field · Rock Meshes · Interactive Cursor Breeze · Dynamic Grass Stems</span>
                 <span className="text-emerald-400">Interactive Cursor Follow</span>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ============================================================== */}
+        {/* TAB 5: MOONPETAL MEADOW SHOWCASE                               */}
+        {/* ============================================================== */}
+        {activeTab === "meadow" && (
+          <div className="space-y-6">
+            <div className="rounded-2xl border border-white/10 bg-black/80 overflow-hidden relative shadow-2xl">
+              <div className="absolute top-4 left-4 z-20 font-mono text-[10px] uppercase tracking-widest text-pink-300 bg-black/60 px-3 py-1 rounded-full border border-pink-500/30 backdrop-blur-md">
+                MOONPETAL MEADOW // PROCEDURAL SHASTA DAISIES, ANEMONES &amp; DEW DROPS
+              </div>
+              <div className="w-full h-[540px] relative">
+                <MoonpetalMeadow style={{ width: "100%", height: "100%" }} />
+              </div>
+              <div className="p-4 bg-neutral-950/90 border-t border-white/10 flex items-center justify-between font-mono text-xs text-white/60">
+                <span>Features: 7-Petal Shasta Daisies · Jagged Anemones · Ink Veins · Interactive Hover Lean</span>
+                <span className="text-pink-400">Procedural Canvas2D Flora</span>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ============================================================== */}
+        {/* TAB 6: BLUEBELL PASS SHOWCASE                                  */}
+        {/* ============================================================== */}
+        {activeTab === "bluebell" && (
+          <div className="space-y-6">
+            <div className="rounded-2xl border border-white/10 bg-black/80 overflow-hidden relative shadow-2xl">
+              <div className="absolute top-4 left-4 z-20 font-mono text-[10px] uppercase tracking-widest text-blue-300 bg-black/60 px-3 py-1 rounded-full border border-blue-500/30 backdrop-blur-md">
+                BLUEBELL PASS // 3500 CARPET BLOOMS, WIND SWAY &amp; MILKY WAY DRIFT
+              </div>
+              <div className="w-full h-[540px] relative">
+                <BluebellPass style={{ width: "100%", height: "100%" }} />
+              </div>
+              <div className="p-4 bg-neutral-950/90 border-t border-white/10 flex items-center justify-between font-mono text-xs text-white/60">
+                <span>Features: 3500 Carpet Blooms · 1600 Grass Tufts · Star Twinkle · Near-Field Flower Sway</span>
+                <span className="text-blue-400">Originkit High-Density Pass</span>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ============================================================== */}
+        {/* TAB 7: MOONLIT PETALS SHOWCASE                                 */}
+        {/* ============================================================== */}
+        {activeTab === "petals" && (
+          <div className="space-y-6">
+            <div className="rounded-2xl border border-white/10 bg-black/80 overflow-hidden relative shadow-2xl">
+              <div className="absolute top-4 left-4 z-20 font-mono text-[10px] uppercase tracking-widest text-purple-300 bg-black/60 px-3 py-1 rounded-full border border-purple-500/30 backdrop-blur-md">
+                MOONLIT PETALS // 11,000 CHERRY BLOSSOMS, CANOPY PHYSICS &amp; WARP
+              </div>
+              <div className="w-full h-[540px] relative">
+                <MoonlitPetals style={{ width: "100%", height: "100%" }} />
+              </div>
+              <div className="p-4 bg-neutral-950/90 border-t border-white/10 flex items-center justify-between font-mono text-xs text-white/60">
+                <span>Features: 11,000 Cherry Blossoms · Falling Petal Particles · Branch Physics · Halo &amp; Bokeh</span>
+                <span className="text-purple-400">Night Backlit Tree Canopy</span>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ============================================================== */}
+        {/* TAB 8: BLOOMING FLOWER SHOWCASE                                */}
+        {/* ============================================================== */}
+        {activeTab === "bloom" && (
+          <div className="space-y-6">
+            <div className="rounded-2xl border border-white/10 bg-black/80 overflow-hidden relative shadow-2xl">
+              <div className="absolute top-4 left-4 z-20 font-mono text-[10px] uppercase tracking-widest text-rose-300 bg-black/60 px-3 py-1 rounded-full border border-rose-500/30 backdrop-blur-md">
+                BLOOMING FLOWER // 3D POINT-CLOUD PROCEDURAL FLOWER OPEN/CLOSE SPRING
+              </div>
+              <div className="w-full h-[540px] relative">
+                <BloomingFlower style={{ width: "100%", height: "100%" }} />
+              </div>
+              <div className="p-4 bg-neutral-950/90 border-t border-white/10 flex items-center justify-between font-mono text-xs text-white/60">
+                <span>Features: Hover-driven spring bloom · 3D cupped petal math · WebGL point cloud · Dynamic stem sway</span>
+                <span className="text-rose-400">Hover Cursor To Bloom</span>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ============================================================== */}
+        {/* TAB 9: STILL SUNSET MEADOW SHOWCASE                            */}
+        {/* ============================================================== */}
+        {activeTab === "sunset" && (
+          <div className="space-y-6">
+            <div className="rounded-2xl border border-white/10 bg-black/80 overflow-hidden relative shadow-2xl">
+              <div className="absolute top-4 left-4 z-20 font-mono text-[10px] uppercase tracking-widest text-amber-300 bg-black/60 px-3 py-1 rounded-full border border-amber-500/30 backdrop-blur-md">
+                STILL SUNSET MEADOW // 3D VOXEL PRAIRIE (THREE.JS + DAY CYCLE)
+              </div>
+              <div className="w-full h-[540px] relative">
+                <StillSunsetMeadow style={{ width: "100%", height: "100%" }} />
+              </div>
+              <div className="p-4 bg-neutral-950/90 border-t border-white/10 flex items-center justify-between font-mono text-xs text-white/60">
+                <span>Features: Voxel Instanced Blades &amp; Flowers · Dynamic Day-Night Cycle · Block Clouds · Interactive Push</span>
+                <span className="text-amber-400">Three.js Voxel Engine</span>
               </div>
             </div>
           </div>
