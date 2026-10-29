@@ -1,324 +1,992 @@
-interface HeroIslandProps {
-  scrollProgress: number; // 0 (at rest, hero surface) to 1 (fully lifted/revealed)
+"use client";
+
+import React, { useEffect, useRef, useState } from "react";
+import { getLight, applyLight, type LightModel } from "@/lib/lighting";
+import { useSkyTime } from "@/lib/useTimeOfDay";
+import MoonlitPetals from "@/components/originkit/MoonlitPetals";
+import { oklch } from "@/lib/color";
+
+/* ==========================================================================
+   Performance Constants & Physics
+   ========================================================================== */
+
+const INTERSECTION_THRESHOLD = 0.1; // Trigger when 10% visible
+// const SCROLL_DAMPING = 0.92; // Smooth scroll velocity decay
+const THRUSTER_VELOCITY_MULTIPLIER = 0.8; // Thruster flare intensity
+const PARALLAX_SCALE_FACTOR = 0.45; // Island scale reduction on scroll
+const MAX_PARALLAX_Y = 180; // Maximum upward translation in px
+
+/* ==========================================================================
+   Type Definitions
+   ========================================================================== */
+
+export interface HeroIslandProps {
   showLayerA?: boolean;
   showLayerB?: boolean;
   wireframe?: boolean;
+  /** Active time of day driver (0–24 hours) – bound to ThermalSkyClock automatically */
+  skyTime?: number;
+  /** Scroll progress: 0 at rest → 1 fully scrolled down */
+  scrollProgress: number;
+  /** Scroll velocity (pixels/ms) for thruster flare effects */
+  scrollVelocity?: number;
+  /** Optional overlay opacity for the video slot (0-1) */
+  videoSlotOpacity?: number;
+  /** Callback when hero enters viewport */
+  onEnterViewport?: () => void;
+  /** Callback when hero leaves viewport */
+  onExitViewport?: () => void;
+  className?: string;
 }
+
+/* ==========================================================================
+   Helper Functions
+   ========================================================================== */
+
+/** Clamp a value between min and max */
+const clamp = (v: number, min: number, max: number): number => Math.min(max, Math.max(min, v));
+
+/** Interpolate between two values using linear interpolation */
+const lerp = (start: number, end: number, t: number): number => start * (1 - t) + end * t;
+
+/* ==========================================================================
+   Component: HeroIsland
+   ========================================================================== */
 
 export function HeroIsland({
   scrollProgress,
-  showLayerA = true,
-  showLayerB = true,
-  wireframe = false,
+  scrollVelocity = 0,
+  skyTime = useSkyTime(),
+  videoSlotOpacity = 1,
+  onEnterViewport,
+  onExitViewport,
+  className = "",
 }: HeroIslandProps) {
-  // Parallax transforms:
-  // As scrollProgress increases, the island lifts upward and tilts slightly
-  const p = Math.max(0, Math.min(1, scrollProgress));
-  const liftY = -p * 50; // Balanced vertical lift combined with CSS camera pull-back
-  const thrusterFlameScale = 0.8 + p * 0.7; // Thruster flames flare as scroll pushes
-  const mechPulse = 0.9 + Math.sin(p * Math.PI) * 0.3;
-
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [isInView, setIsInView] = useState(false);
+  
+  const light = getLight(skyTime);
+  const t = light.time;
+  
+  /* ------------------------------------------------------------------------
+     Live Lighting Token Synchronization
+     Write CSS custom properties once per frame
+     ------------------------------------------------------------------------ */
+  useEffect(() => {
+    if (typeof document !== "undefined") {
+      applyLight(light);
+    }
+  }, [light]);
+  
+  /* ------------------------------------------------------------------------
+     IntersectionObserver Lifecycle Management
+     Halt all heavy WebGL/Canvas loops when out of view
+     ------------------------------------------------------------------------ */
+  useEffect(() => {
+    if (typeof IntersectionObserver === "undefined" || !containerRef.current) return;
+    
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        const visible = entry.isIntersecting && entry.intersectionRatio > INTERSECTION_THRESHOLD;
+        if (visible && !isInView) {
+          setIsInView(true);
+          onEnterViewport?.();
+        } else if (!visible && isInView) {
+          setIsInView(false);
+          onExitViewport?.();
+        }
+      },
+      { threshold: [0, 0.1, 0.25, 0.5, 0.75, 1.0] }
+    );
+    
+    observer.observe(containerRef.current);
+    return () => observer.disconnect();
+  }, [isInView, onEnterViewport, onExitViewport]);
+  
+  /* ------------------------------------------------------------------------
+     Parallax Physics Calculations (Shared Mutable Refs)
+     Driven by scrollProgress and scrollVelocity without React re-renders
+     ------------------------------------------------------------------------ */
+  const paralaxY = useMemoParallax(scrollProgress, MAX_PARALLAX_Y, PARALLAX_SCALE_FACTOR);
+  const thrusterScale = useMemoThrusterFlare(scrollVelocity, THRUSTER_VELOCITY_MULTIPLIER);
+  const arcReactorPulse = useMemoArcReactorPulse(t);
+  
+  /* ------------------------------------------------------------------------
+     Dynamic Material Gradients (OKLCH-driven)
+     Generated from live sky palette
+     ------------------------------------------------------------------------ */
+  const meadowGradient = useMemoMeadowGradient(light.stops.terrain);
+  const _rockStrataGradient = useMemoRockStrata(light.palette.terrain); void [_rockStrataGradient];
+  const plasmaThrusterGradient = useMemoPlasmaGradient(light.palette.sunGlow);
+  
+  /* ------------------------------------------------------------------------
+     Video Slot Relighting Filters
+     Atmospheric tint + directional rim-light + night emissive glow
+     ------------------------------------------------------------------------ */
+  const videoFilterStyle = useMemoVideoRelightFilter(light);
+  
   return (
-    <div className="hero-island-container relative w-full h-full flex items-center justify-center overflow-visible select-none pointer-events-none">
+    <div
+      ref={containerRef}
+      className={`hero-island-root relative w-full h-[300vh] overflow-hidden ${className}`}
+      style={{ 
+        willChange: "transform",
+        contain: "layout style"
+      }}
+    >
+      {/* Sticky Viewport Stage (100vh container) */}
+      <div className="hero-stage sticky top-0 h-screen w-full overflow-hidden">
+        {/* ====================================================================
+            LAYER 0.5: SOKOVIA KEEL & PLASMA THRUSTERS (z-index: 0)
+            Positioned beneath the meadow, revealed on scroll
+            ==================================================================== */}
+        <HeroKeelThrusters
+          isVisible={isInView}
+          parallaxY={paralaxY}
+          thrusterScale={thrusterScale}
+          arcReactorPulse={arcReactorPulse}
+          plasmaGradient={plasmaThrusterGradient}
+          daylight={light.daylight}
+          
+        />
+        
+        {/* ====================================================================
+            LAYER 1: MEADOW BACKDROP & GENERATIVE FLOWERS (z-index: 1)
+            Wide prairie horizon spanning edge-to-edge (128vw)
+            ==================================================================== */}
+        <MeadowBackdrop
+          isVisible={isInView}
+          parallaxY={paralaxY}
+          gradient={meadowGradient}
+          daylight={light.daylight}
+          golden={light.golden}
+          starOpacity={light.starOpacity}
+        />
+        
+        {/* ====================================================================
+            LAYER 2: CHARACTER VIDEO SLOT (z-index: 2)
+            Masked responsive grid container on plateau center
+            ==================================================================== */}
+        <VideoCharacterSlot
+          isVisible={isInView}
+          parallaxY={paralaxY}
+          opacity={videoSlotOpacity}
+          filterStyle={videoFilterStyle}
+          sceneTime={t}
+        />
+        
+        {/* ====================================================================
+            LAYER 3: MOONLIT PETALS CANOPY OVERHEAD (z-index: 3)
+            Cherry blossom arch dropping drifting petals
+            ==================================================================== */}
+        <MoonlitPetalsCanopy
+          isVisible={isInView}
+          daylight={light.daylight}
+          petalColor={light.palette.cloudRim}
+        />
+        
+        {/* ====================================================================
+            LAYER 4: FOREGROUND MACRO WILD FLOWERS (z-index: 4)
+            Occluding base of desk, swaying on cursor hover
+            ==================================================================== */}
+        <ForegroundWildflowers
+          isVisible={isInView}
+          parallaxY={paralaxY}
+          golden={light.golden}
+          timestamp={t}
+        />
+      </div>
+    </div>
+  );
+}
+
+/* ==========================================================================
+   Sub-Components
+   ========================================================================== */
+
+/**
+ * LAYER 0.5: Sokovia Keel with Iron Man Plasma Thrusters
+ * Subterranean rocky underside with reactive jet propulsion
+ */
+function HeroKeelThrusters({
+  isVisible,
+  parallaxY,
+  thrusterScale,
+  arcReactorPulse,
+  plasmaGradient,
+  daylight,
+  terrainTint: _terrainTint,
+}: {
+  isVisible: boolean;
+  parallaxY: number;
+  thrusterScale: number;
+  arcReactorPulse: number;
+  plasmaGradient: string;
+  daylight: number;
+  terrainTint?: string;
+}) {
+  if (!isVisible) return null;
+  
+  const nightEmissive = 1 - daylight;
+  const bounceLightOpacity = nightEmissive * 0.35;
+  
+  return (
+    <div
+      className="keel-thrusters-layer absolute inset-0 pointer-events-none"
+      style={{
+        zIndex: 0,
+        transform: `translateY(${parallaxY}px)`,
+        transformOrigin: "center bottom",
+        willChange: "transform",
+      }}
+    >
+      {/* Subterranean Rock Strata SVG */}
       <svg
         viewBox="0 0 1600 1000"
-        className="w-full h-auto max-h-[92vh] overflow-visible drop-shadow-[0_24px_48px_rgba(0,0,0,0.4)]"
+        preserveAspectRatio="xMidYMax slice"
+        className="w-full h-auto absolute bottom-0 left-0"
+        style={{ height: "60vh" }}
       >
         <defs>
-          {/* Gradients for Rock Strata & Geological Depth */}
-          <linearGradient id="strata1" x1="0%" y1="0%" x2="0%" y2="100%">
-            <stop offset="0%" stopColor="#433e38" />
-            <stop offset="40%" stopColor="#2c2a26" />
-            <stop offset="100%" stopColor="#1a1917" />
+          {/* Multi-stop geological strata gradient */}
+          <linearGradient id="strata-gradient" x1="0%" y1="0%" x2="0%" y2="100%">
+            <stop offset="0%" stopColor={oklch({ l: 0.28, c: 0.04, h: 285 }).toString()} />
+            <stop offset="40%" stopColor={oklch({ l: 0.2, c: 0.035, h: 288 }).toString()} />
+            <stop offset="100%" stopColor={oklch({ l: 0.14, c: 0.03, h: 290 }).toString()} />
           </linearGradient>
-          <linearGradient id="strata2" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stopColor="#544e45" />
-            <stop offset="100%" stopColor="#252320" />
-          </linearGradient>
-
-          {/* Prairie Grass Gradient */}
-          <linearGradient id="meadowGradient" x1="0%" y1="0%" x2="0%" y2="100%">
-            <stop offset="0%" stopColor="#869f68" />
-            <stop offset="45%" stopColor="#5d7249" />
-            <stop offset="100%" stopColor="#3d4c30" />
-          </linearGradient>
-
-          {/* Rocket Thruster Flame Gradient (Industrial Plasma) */}
-          <linearGradient id="thrusterFire" x1="0%" y1="0%" x2="0%" y2="100%">
-            <stop offset="0%" stopColor="#ffffff" stopOpacity="1" />
-            <stop offset="20%" stopColor="#38bdf8" stopOpacity="0.95" />
-            <stop offset="55%" stopColor="#f97316" stopOpacity="0.8" />
-            <stop offset="90%" stopColor="#ef4444" stopOpacity="0.4" />
-            <stop offset="100%" stopColor="#ef4444" stopOpacity="0" />
-          </linearGradient>
-
-          {/* Iron Man Repulsor Beam Gradient */}
-          <radialGradient id="repulsorGlow" cx="50%" cy="50%" r="50%">
-            <stop offset="0%" stopColor="#ffffff" stopOpacity="1" />
-            <stop offset="30%" stopColor="#67e8f9" stopOpacity="0.9" />
-            <stop offset="70%" stopColor="#0284c7" stopOpacity="0.5" />
-            <stop offset="100%" stopColor="#0284c7" stopOpacity="0" />
-          </radialGradient>
-
-          {/* Thruster exhaust smoke blur */}
-          <filter id="exhaustBlur" x="-30%" y="-30%" width="160%" height="160%">
-            <feGaussianBlur stdDeviation="6" />
+          
+          {/* Plasma thruster exhaust blur filter */}
+          <filter id="thruster-exhaust-blur" x="-50%" y="-50%" width="200%" height="200%">
+            <feGaussianBlur stdDeviation="12" result="blurredFlame" />
+            <feMerge>
+              <feMergeNode in="blurredFlame" />
+              <feMergeNode in="SourceGraphic" />
+            </feMerge>
+          </filter>
+          
+          {/* Plasma corona glow */}
+          <filter id="plasma-glow" x="-100%" y="-100%" width="300%" height="300%">
+            <feGaussianBlur stdDeviation="8" result="glow" />
+            <feMerge>
+              <feMergeNode in="glow" />
+              <feMergeNode in="SourceGraphic" />
+            </feMerge>
           </filter>
         </defs>
-
-        {/* Global Group with Scroll Elevation Lift */}
-        <g
-          transform={`translate(0, ${liftY})`}
-          stroke={wireframe ? "#00ffcc" : "none"}
-          strokeWidth={wireframe ? 1 : 0}
-          strokeDasharray={wireframe ? "3 3" : "none"}
-        >
-          {/* ============================================================== */}
-          {/* LAYER B: UNDERSIDE KEEL, ROOTS, ROCKET THRUSTERS & IRON MAN    */}
-          {/* ============================================================== */}
-          {showLayerB && (
-            <g id="layer-b-keel" className="transition-opacity duration-300">
-              {/* Rock Strata Base Mass */}
-              <path
-                d="M 120 440
-                   C 180 540, 260 620, 360 680
-                   C 460 740, 560 790, 680 840
-                   C 740 865, 780 885, 800 900
-                   C 820 885, 860 865, 920 840
-                   C 1040 790, 1140 740, 1240 680
-                   C 1340 620, 1420 540, 1480 440
-                   Z"
-                fill={wireframe ? "none" : "url(#strata1)"}
-              />
-
-              {/* Layered Geological Crags & Fault Lines */}
-              <path
-                d="M 220 480
-                   C 320 570, 480 650, 640 720
-                   C 730 760, 770 790, 800 820
-                   C 830 790, 870 760, 960 720
-                   C 1120 650, 1280 570, 1380 480
-                   C 1260 520, 1100 580, 960 610
-                   C 800 640, 640 610, 220 480 Z"
-                fill={wireframe ? "none" : "url(#strata2)"}
-                opacity="0.8"
-              />
-
-              <path
-                d="M 340 540
-                   C 480 620, 650 710, 800 750
-                   C 950 710, 1120 620, 1260 540
-                   C 1100 600, 950 630, 800 630
-                   C 650 630, 500 600, 340 540 Z"
-                fill={wireframe ? "none" : "#1c1b18"}
-                opacity="0.9"
-              />
-
-              {/* Hanging Roots Clusters */}
-              <g stroke="#3a342c" strokeWidth="2.5" strokeLinecap="round" fill="none">
-                {/* Left Root Cluster */}
-                <path d="M 380 650 Q 370 720, 350 780 T 360 830" />
-                <path d="M 420 670 Q 430 740, 410 810 T 425 870" />
-                <path d="M 460 690 Q 480 770, 470 840" />
-
-                {/* Right Root Cluster */}
-                <path d="M 1220 650 Q 1230 720, 1250 780 T 1240 830" />
-                <path d="M 1180 670 Q 1170 740, 1190 810 T 1175 870" />
-                <path d="M 1140 690 Q 1120 770, 1130 840" />
-
-                {/* Center Root Tendrils near Keel */}
-                <path d="M 720 810 Q 700 870, 715 920" />
-                <path d="M 880 810 Q 900 870, 885 920" />
-              </g>
-
-              {/* ── INDUSTRIAL ROCKET THRUSTERS (LEFT & RIGHT GIMBALS) ──────── */}
-              {/* Left Rocket Thruster Unit */}
-              <g id="left-thruster" transform="translate(480, 710)">
-                {/* Steel Gimbal Mount Bracket */}
-                <polygon points="-25,-20 25,-20 20,10 -20,10" fill="#2d3748" stroke="#4a5568" strokeWidth="1.5" />
-                {/* Bell Nozzle */}
-                <path d="M -20 10 L 20 10 L 32 60 L -32 60 Z" fill="#1a202c" stroke="#718096" strokeWidth="2" />
-                {/* Nozzle Cooling Ribs */}
-                <line x1="-24" y1="25" x2="24" y2="25" stroke="#e2e8f0" strokeWidth="1" opacity="0.4" />
-                <line x1="-28" y1="42" x2="28" y2="42" stroke="#e2e8f0" strokeWidth="1" opacity="0.4" />
-
-                {/* Blasting Downward Flame Exhaust Plume */}
-                <g transform={`scale(1, ${thrusterFlameScale})`}>
-                  <polygon
-                    points="0,60 -36,180 0,260 36,180"
-                    fill="url(#thrusterFire)"
-                    filter="url(#exhaustBlur)"
-                  />
-                  <polygon points="0,60 -18,140 0,190 18,140" fill="#ffffff" opacity="0.9" />
-                </g>
-              </g>
-
-              {/* Right Rocket Thruster Unit */}
-              <g id="right-thruster" transform="translate(1120, 710)">
-                {/* Steel Gimbal Mount Bracket */}
-                <polygon points="-25,-20 25,-20 20,10 -20,10" fill="#2d3748" stroke="#4a5568" strokeWidth="1.5" />
-                {/* Bell Nozzle */}
-                <path d="M -20 10 L 20 10 L 32 60 L -32 60 Z" fill="#1a202c" stroke="#718096" strokeWidth="2" />
-                {/* Nozzle Cooling Ribs */}
-                <line x1="-24" y1="25" x2="24" y2="25" stroke="#e2e8f0" strokeWidth="1" opacity="0.4" />
-                <line x1="-28" y1="42" x2="28" y2="42" stroke="#e2e8f0" strokeWidth="1" opacity="0.4" />
-
-                {/* Blasting Downward Flame Exhaust Plume */}
-                <g transform={`scale(1, ${thrusterFlameScale})`}>
-                  <polygon
-                    points="0,60 -36,180 0,260 36,180"
-                    fill="url(#thrusterFire)"
-                    filter="url(#exhaustBlur)"
-                  />
-                  <polygon points="0,60 -18,140 0,190 18,140" fill="#ffffff" opacity="0.9" />
-                </g>
-              </g>
-
-              {/* ── CENTRAL APEX: IRON MAN / MECH SUIT EXOSKELETON ────────── */}
-              {/* Mounted at the very keel (x=800, y=900) thrusting the island upward */}
-              <g id="iron-man-apex" transform="translate(800, 895)">
-                {/* Arc Reactor & Repulsor Blast Aura */}
-                <circle cx="0" cy="30" r="60" fill="url(#repulsorGlow)" opacity={mechPulse} />
-
-                {/* Exoskeleton Mech Helmet & Head */}
-                <ellipse cx="0" cy="-22" rx="9" ry="11" fill="#b91c1c" stroke="#f59e0b" strokeWidth="1.5" />
-                <rect x="-6" y="-24" width="12" height="3" rx="1.5" fill="#38bdf8" />
-
-                {/* Armor Torso & Arc Reactor Chest */}
-                <polygon points="-16,-10 16,-10 12,18 -12,18" fill="#991b1b" stroke="#f59e0b" strokeWidth="1.5" />
-                <circle cx="0" cy="2" r="5" fill="#ffffff" stroke="#38bdf8" strokeWidth="2" />
-
-                {/* Shoulders & Arms Thrusting Downward / Inverted Flight */}
-                {/* Left Arm & Repulsor Palm */}
-                <path d="M -16 -6 L -28 12 L -24 32" stroke="#b91c1c" strokeWidth="4.5" strokeLinecap="round" fill="none" />
-                <circle cx="-24" cy="34" r="4" fill="#38bdf8" />
-                <line x1="-24" y1="36" x2="-28" y2="120" stroke="#38bdf8" strokeWidth="3" opacity="0.8" />
-
-                {/* Right Arm & Repulsor Palm */}
-                <path d="M 16 -6 L 28 12 L 24 32" stroke="#b91c1c" strokeWidth="4.5" strokeLinecap="round" fill="none" />
-                <circle cx="24" cy="34" r="4" fill="#38bdf8" />
-                <line x1="24" y1="36" x2="28" y2="120" stroke="#38bdf8" strokeWidth="3" opacity="0.8" />
-
-                {/* Legs & Boot Jet Thrusters */}
-                <path d="M -8 18 L -12 45 L -10 60" stroke="#991b1b" strokeWidth="5" strokeLinecap="round" fill="none" />
-                <path d="M 8 18 L 12 45 L 10 60" stroke="#991b1b" strokeWidth="5" strokeLinecap="round" fill="none" />
-
-                {/* Boot Repulsor Core Jets */}
-                <g transform={`scale(1, ${thrusterFlameScale})`}>
-                  <line x1="-10" y1="62" x2="-14" y2="180" stroke="#00f0ff" strokeWidth="4.5" strokeLinecap="round" />
-                  <line x1="10" y1="62" x2="14" y2="180" stroke="#00f0ff" strokeWidth="4.5" strokeLinecap="round" />
-                  <line x1="-10" y1="62" x2="-14" y2="140" stroke="#ffffff" strokeWidth="2" />
-                  <line x1="10" y1="62" x2="14" y2="140" stroke="#ffffff" strokeWidth="2" />
-                </g>
-              </g>
-            </g>
-          )}
-
-          {/* ============================================================== */}
-          {/* LAYER A: TOP MEADOW SURFACE, GRASSES, DESK, LAPTOP & DESIGNER */}
-          {/* ============================================================== */}
-          {showLayerA && (
-            <g id="layer-a-meadow">
-              {/* Prairie Knoll Terrain Surface */}
-              <path
-                d="M -40 440
-                   C 180 435, 380 420, 600 425
-                   C 720 428, 880 428, 1000 424
-                   C 1220 420, 1420 435, 1640 440
-                   L 1640 480
-                   C 1420 490, 1220 500, 1000 505
-                   C 880 508, 720 508, 600 505
-                   C 380 500, 180 490, -40 480 Z"
-                fill={wireframe ? "none" : "url(#meadowGradient)"}
-              />
-
-              {/* Prairie Grass Blades & Wildflower Stems */}
-              <g stroke="#a3b889" strokeWidth="1.75" strokeLinecap="round" opacity="0.85">
-                {/* Grass tufts across the ridge */}
-                <path d="M 480 425 Q 485 400, 490 380" />
-                <path d="M 485 425 Q 492 405, 502 385" />
-                <path d="M 495 425 Q 490 405, 485 390" />
-
-                <path d="M 620 426 Q 628 402, 635 382" />
-                <path d="M 628 426 Q 635 408, 645 388" />
-
-                <path d="M 980 424 Q 975 400, 970 380" />
-                <path d="M 988 424 Q 995 405, 1002 385" />
-
-                <path d="M 1120 428 Q 1125 405, 1135 385" />
-                <path d="M 1130 428 Q 1138 410, 1148 392" />
-              </g>
-
-              {/* Wildflower Petal Accents */}
-              <circle cx="490" cy="378" r="3" fill="#f43f5e" />
-              <circle cx="503" cy="384" r="2.5" fill="#fbbf24" />
-              <circle cx="636" cy="380" r="3" fill="#38bdf8" />
-              <circle cx="970" cy="378" r="3" fill="#f43f5e" />
-              <circle cx="1136" cy="383" r="2.5" fill="#fbbf24" />
-
-              {/* ── VINTAGE DESK, LAPTOP & SEATED DESIGNER ───────────────── */}
-              {/* Placed gracefully at center ridge (x=800, y=425) */}
-              <g id="designer-station" transform="translate(800, 425)">
-                {/* Vintage Solid Wooden Work Desk */}
-                {/* Tabletop */}
-                <rect x="-90" y="-85" width="180" height="9" rx="2" fill="#5c4033" stroke="#3e2723" strokeWidth="1.5" />
-                {/* Desk Legs (Trestle style) */}
-                <line x1="-75" y1="-76" x2="-80" y2="0" stroke="#4a3525" strokeWidth="4.5" strokeLinecap="round" />
-                <line x1="75" y1="-76" x2="80" y2="0" stroke="#4a3525" strokeWidth="4.5" strokeLinecap="round" />
-                {/* Leg Crossbar */}
-                <line x1="-78" y1="-35" x2="78" y2="-35" stroke="#3e2723" strokeWidth="2.5" />
-
-                {/* Brass Architect Lamp */}
-                <g transform="translate(-60, -85)">
-                  <line x1="0" y1="0" x2="-8" y2="-32" stroke="#d4af37" strokeWidth="2.5" strokeLinecap="round" />
-                  <line x1="-8" y1="-32" x2="10" y2="-48" stroke="#d4af37" strokeWidth="2.5" strokeLinecap="round" />
-                  <path d="M 6 -52 L 18 -46 L 14 -40 Z" fill="#b8860b" />
-                  {/* Warm light cone */}
-                  <polygon points="12,-43 45,-10 0,-10" fill="#fef08a" opacity="0.15" />
-                </g>
-
-                {/* Ceramic Coffee Mug */}
-                <rect x="-35" y="-95" width="7" height="10" rx="1.5" fill="#f1f5f9" />
-
-                {/* Open Modern Laptop */}
-                <g transform="translate(-15, -85)">
-                  {/* Laptop Base */}
-                  <rect x="0" y="-2" width="38" height="3" rx="1" fill="#94a3b8" />
-                  {/* Laptop Screen Tilted Back */}
-                  <polygon points="4,-2 34,-2 38,-30 8,-30" fill="#334155" stroke="#64748b" strokeWidth="1" />
-                  {/* Glowing Display */}
-                  <polygon points="6,-3 32,-3 36,-28 10,-28" fill="#e0f2fe" opacity="0.9" />
-                  {/* Code / Radar lines on screen */}
-                  <line x1="12" y1="-23" x2="28" y2="-23" stroke="#0284c7" strokeWidth="1.5" />
-                  <line x1="10" y1="-17" x2="24" y2="-17" stroke="#0284c7" strokeWidth="1.5" />
-                  <line x1="8" y1="-11" x2="30" y2="-11" stroke="#0284c7" strokeWidth="1.5" />
-                </g>
-
-                {/* Studio Work Chair */}
-                <rect x="30" y="-72" width="28" height="6" rx="2" fill="#1e293b" />
-                <rect x="52" y="-105" width="6" height="35" rx="2" fill="#1e293b" />
-                <line x1="44" y1="-66" x2="44" y2="0" stroke="#0f172a" strokeWidth="4" />
-
-                {/* Seated Designer Figure */}
-                <g id="designer-figure" transform="translate(42, -90)">
-                  {/* Head & Thoughtful Posture */}
-                  <circle cx="-5" cy="-38" r="9" fill="#e2e8f0" />
-                  {/* Hair / Cap */}
-                  <path d="M -15 -42 Q -5 -50, 4 -40 Z" fill="#0f172a" />
-                  {/* Torso (Jacket) */}
-                  <path d="M -12 -28 C -14 -12, -4 0, 8 18" stroke="#334155" strokeWidth="13" strokeLinecap="round" fill="none" />
-                  {/* Arm Resting on Table towards Laptop keyboard */}
-                  <path d="M -10 -22 Q -30 -12, -45 5" stroke="#334155" strokeWidth="4.5" strokeLinecap="round" fill="none" />
-                  {/* Hand on Trackpad */}
-                  <circle cx="-47" cy="5" r="3" fill="#cbd5e1" />
-                  {/* Crossed Legs under desk */}
-                  <path d="M 5 18 L 10 50 L -15 90" stroke="#1e293b" strokeWidth="6" strokeLinecap="round" fill="none" />
-                </g>
-              </g>
-            </g>
-          )}
+        
+        {/* Craggy bedrock mass */}
+        <path
+          d="M 0 520
+             Q 320 580, 480 680 T 800 880 T 1120 680 T 1600 520
+             L 1600 1000 L 0 1000 Z"
+          fill="url(#strata-gradient)"
+          stroke="rgba(255,255,255,0.06)"
+          strokeWidth="1"
+        />
+        
+        {/* Tectonic shelf layers */}
+        <path
+          d="M 180 560
+             Q 420 620, 580 720 T 800 900 T 1020 720 T 1420 560
+             L 1420 580
+             Q 1020 640, 800 740 T 580 740 T 180 580 Z"
+          fill="rgba(45, 42, 38, 0.6)"
+          stroke="rgba(255,255,255,0.03)"
+          strokeWidth="0.5"
+        />
+        
+        {/* Hanging ancient root tendrils */}
+        <g stroke={oklch({ l: 0.22, c: 0.025, h: 290 }).toString()} strokeWidth="2.5" strokeLinecap="round" fill="none" opacity="0.7">
+          <path d="M 380 680 Q 370 740, 350 790 T 360 840" />
+          <path d="M 420 700 Q 430 770, 410 830 T 425 880" />
+          <path d="M 1220 680 Q 1230 740, 1250 790 T 1240 840" />
+          <path d="M 1180 700 Q 1170 770, 1190 830 T 1175 880" />
+          <path d="M 720 860 Q 700 910, 715 960" />
+          <path d="M 880 860 Q 900 910, 885 960" />
         </g>
+        
+        {/* ====================================================================
+            IRON MAN PLASMA THRUSTERS (LEFT & RIGHT)
+            Reactive flame cones driven by scroll velocity
+            ==================================================================== */}
+        <g id="plasma-thruster-system">
+          {/* Left Thruster Jet */}
+          <g transform="translate(480, 720)">
+            {/* Steel gimbal mount */}
+            <polygon
+              points="-30,-25 30,-25 25,15 -25,15"
+              fill="#2d3748"
+              stroke={oklch({ l: 0.35, c: 0.04, h: 250 }).toString()}
+              strokeWidth="2"
+            />
+            
+            {/* Bell nozzle cooling ribs */}
+            <line x1="-28" y1="30" x2="28" y2="30" stroke="rgba(255,255,255,0.3)" strokeWidth="1" />
+            <line x1="-32" y1="50" x2="32" y2="50" stroke="rgba(255,255,255,0.3)" strokeWidth="1" />
+            
+            {/* Primary plasma jet cone (scroll-velocity flare) */}
+            <g filter="url(#thruster-exhaust-blur)">
+              <polygon
+                points="0,15 -42 180 0 320 42 180"
+                fill={plasmaGradient}
+                transform={`scale(1, ${thrusterScale})`}
+              />
+              <polygon points="0,15 -22 160 0 240 22 160" fill="#ffffff" opacity="0.92" />
+            </g>
+            
+            {/* Plasma corona heat haze (displacement shimmer) */}
+            <circle cx="0" cy="280" r="35" fill={plasmaGradient} opacity="0.25" filter="url(#plasma-glow)" />
+          </g>
+          
+          {/* Right Thruster Jet */}
+          <g transform="translate(1120, 720)">
+            <polygon
+              points="-30,-25 30,-25 25,15 -25,15"
+              fill="#2d3748"
+              stroke={oklch({ l: 0.35, c: 0.04, h: 250 }).toString()}
+              strokeWidth="2"
+            />
+            <line x1="-28" y1="30" x2="28" y2="30" stroke="rgba(255,255,255,0.3)" strokeWidth="1" />
+            <line x1="-32" y1="50" x2="32" y2="50" stroke="rgba(255,255,255,0.3)" strokeWidth="1" />
+            
+            <g filter="url(#thruster-exhaust-blur)">
+              <polygon
+                points="0,15 -42 180 0 320 42 180"
+                fill={plasmaGradient}
+                transform={`scale(1, ${thrusterScale})`}
+              />
+              <polygon points="0,15 -22 160 0 240 22 160" fill="#ffffff" opacity="0.92" />
+            </g>
+            
+            <circle cx="0" cy="280" r="35" fill={plasmaGradient} opacity="0.25" filter="url(#plasma-glow)" />
+          </g>
+          
+          {/* ====================================================================
+              CENTRAL APEX: ARC REACTOR & EXOSKELETON (Non-functional, purely aesthetic)
+              Mounted at keel tip, pulses in sync with thermal wave
+              ==================================================================== */}
+          <g transform="translate(800, 900)">
+            {/* Arc reactor pulsing aura */}
+            <circle
+              cx="0"
+              cy="0"
+              r="70"
+              fill="url(#arc-reactor-gradient)"
+              opacity={arcReactorPulse}
+              filter="url(#plasma-glow)"
+            />
+            
+            {/* Exoskeleton armor pieces (stylized representation) */}
+            <ellipse
+              cx="0"
+              cy="-30"
+              rx="12"
+              ry="14"
+              fill="#991b1b"
+              stroke={oklch({ l: 0.6, c: 0.15, h: 350 }).toString()}
+              strokeWidth="2"
+            />
+            <rect x="-8" y="-34" width="16" height="4" rx="2" fill="#38bdf8" opacity="0.8" />
+            
+            {/* Chest plate arc reactor core */}
+            <circle cx="0" cy="5" r="6" fill="#ffffff" stroke="#38bdf8" strokeWidth="2.5" filter="url(#plasma-glow)" />
+            
+            {/* Arms thrusting downward */}
+            <line x1="-18" y1="-10" x2="-24" y2="20" stroke="#991b1b" strokeWidth="6" strokeLinecap="round" />
+            <line x1="18" y1="-10" x2="24" y2="20" stroke="#991b1b" strokeWidth="6" strokeLinecap="round" />
+            <circle cx="-24" cy="22" r="5" fill="#38bdf8" filter="url(#plasma-glow)" />
+            <circle cx="24" cy="22" r="5" fill="#38bdf8" filter="url(#plasma-glow)" />
+            
+            {/* Boot jets */}
+            <line x1="-12" y1="25" x2="-16" y2="90" stroke="#00f0ff" strokeWidth="5" strokeLinecap="round" opacity="0.85" />
+            <line x1="12" y1="25" x2="16" y2="90" stroke="#00f0ff" strokeWidth="5" strokeLinecap="round" opacity="0.85" />
+          </g>
+        </g>
+        
+        {/* Upward bounce lighting from thrusters (night only) */}
+        <rect
+          x="0"
+          y="700"
+          width="1600"
+          height="300"
+          fill={plasmaGradient}
+          opacity={bounceLightOpacity}
+          filter="url(#thruster-exhaust-blur)"
+        />
       </svg>
     </div>
   );
 }
+
+/**
+ * LAYER 1: Meadow Backdrop & Generative Prairie
+ * Wide horizon with procedural wildflower clusters
+ */
+function MeadowBackdrop({
+  isVisible,
+  parallaxY,
+  gradient,
+  daylight: _daylight,
+  golden,
+  starOpacity,
+}: {
+  isVisible: boolean;
+  parallaxY: number;
+  gradient: string;
+  daylight: number;
+  golden: number;
+  starOpacity: number;
+}) {
+  if (!isVisible) return null;
+  
+  return (
+    <div
+      className="meadow-backdrop-layer absolute inset-0 pointer-events-none"
+      style={{
+        zIndex: 1,
+        transform: `translateY(${parallaxY}px) scale(${1 - parallaxY / 800})`,
+        transformOrigin: "center bottom",
+        willChange: "transform",
+      }}
+    >
+      {/* Wide prairie horizon */}
+      <svg
+        viewBox="0 0 1600 1000"
+        preserveAspectRatio="xMidYMax slice"
+        className="w-[128vw] absolute bottom-[-10%] left-[-14vw]"
+        style={{ maxHeight: "65vh" }}
+      >
+        <defs>
+          {/* Procedural grass gradient */}
+          <linearGradient id="grass-gradient" x1="0%" y1="0%" x2="0%" y2="100%">
+            <stop offset="0%" stopColor={oklch({ l: 0.58, c: 0.18, h: 125 })} />
+            <stop offset="45%" stopColor={oklch({ l: 0.42, c: 0.22, h: 130 })} />
+            <stop offset="100%" stopColor={oklch({ l: 0.28, c: 0.15, h: 135 })} />
+          </linearGradient>
+          
+          {/* Stipple dust texture */}
+          <filter id="stipple-dust">
+            <feTurbulence type="fractalNoise" baseFrequency="0.03" numOctaves="3" result="noise" />
+            <feDisplacementMap in="SourceGraphic" in2="noise" scale="8" xChannelSelector="R" yChannelSelector="G" />
+          </filter>
+        </defs>
+        
+        {/* Base prairie terrain */}
+        <path
+          d="M -100 400
+             Q 320 390, 580 405 T 800 410 T 1020 405 T 1700 400
+             L 1700 480
+             Q 1020 490, 800 495 T 580 490 T -100 480 Z"
+          fill={gradient}
+          filter="url(#stipple-dust)"
+        />
+        
+        {/* Grass blade silhouettes (animated sways via CSS keyframes) */}
+        <g stroke="url(#grass-gradient)" strokeWidth="2" strokeLinecap="round" opacity="0.85">
+          {[...Array(40)].map((_, i) => {
+            const x = 200 + i * 32;
+            const height = 25 + Math.random() * 35;
+            const curve = (Math.random() - 0.5) * 20;
+            return (
+              <path
+                key={i}
+                d={`M ${x} 410 Q ${x + curve} ${410 - height}, ${x + curve * 0.5} ${410 - height * 0.8}`}
+                style={{
+                  animation: `grassSway ${2 + Math.random() * 3}s ease-in-out infinite`,
+                  animationDelay: `${Math.random() * 2}s`,
+                }}
+              />
+            );
+          })}
+        </g>
+        
+        {/* Wildflower clusters */}
+        <g opacity="0.75">
+          {[...Array(25)].map((_, i) => {
+            const x = 250 + i * 55;
+            const hue = 280 + Math.random() * 60; // rose-violet range
+            
+            const color = oklch({ l: 0.65, c: 0.12, h: hue }).toString();
+            return (
+              <circle
+                key={i}
+                cx={x}
+                cy={405 - Math.random() * 20}
+                r={2.5 + Math.random() * 2}
+                fill={color}
+              />
+            );
+          })}
+        </g>
+        
+        {/* Dawn/dusk golden hour rim lighting on crest */}
+        <path
+          d="M -100 400 Q 320 390, 580 405 T 800 410 T 1020 405 T 1700 400"
+          stroke="url(#golden-rim)"
+          strokeWidth="3"
+          strokeOpacity={golden * 0.4}
+          fill="none"
+        />
+        
+        <defs>
+          <linearGradient id="golden-rim" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" stopColor={oklch({ l: 0.85, c: 0.18, h: 45 })} stopOpacity="0" />
+            <stop offset="50%" stopColor={oklch({ l: 0.75, c: 0.22, h: 38 })} stopOpacity={golden * 0.6} />
+            <stop offset="100%" stopColor={oklch({ l: 0.85, c: 0.18, h: 45 })} stopOpacity="0" />
+          </linearGradient>
+        </defs>
+      </svg>
+      
+      {/* Night sky sparkle overlay */}
+      {starOpacity > 0.1 && (
+        <div
+          className="meadow-sparkles absolute inset-0 pointer-events-none"
+          style={{
+            backgroundImage: `radial-gradient(circle, rgba(255,255,255,${starOpacity * 0.4}) 1px, transparent 1px)`,
+            backgroundSize: "60px 60px",
+            backgroundPosition: "center",
+            opacity: starOpacity,
+          }}
+        />
+      )}
+    </div>
+  );
+}
+
+/**
+ * LAYER 2: Character Video Slot Container
+ * Responsive masked grid for vintage desk loop playback
+ */
+function VideoCharacterSlot({
+  isVisible,
+  parallaxY,
+  opacity,
+  filterStyle,
+  sceneTime,
+}: {
+  isVisible: boolean;
+  parallaxY: number;
+  opacity: number;
+  filterStyle: React.CSSProperties;
+  sceneTime: number;
+}) {
+  if (!isVisible) return null;
+  
+  return (
+    <div
+      className="video-slot-container absolute inset-0 flex items-center justify-center pointer-events-none"
+      style={{
+        zIndex: 2,
+        transform: `translateY(${parallaxY * 0.7}px)`,
+        willChange: "transform",
+      }}
+    >
+      {/* Responsive CSS Grid Slot Container */}
+      <div
+        data-slot="character-video-slot"
+        className="relative aspect-[16/9] w-[min(80vw,900px)] max-h-[40vh]"
+        style={{
+          opacity,
+          willChange: "opacity",
+        }}
+      >
+        {/* Obsidian Glass Frame */}
+        <div
+          className="absolute inset-0 rounded-xl backdrop-blur-2xl saturate-[1.35]"
+          style={{
+            backgroundColor: "rgba(16, 20, 36, 0.85)",
+            border: `1px solid rgba(255, 255, 255, 0.14)`,
+            boxShadow: `
+              inset 0 1px 0 rgba(255, 255, 255, 0.18),
+              0 24px 48px -12px rgba(0, 0, 0, 0.45),
+              0 8px 16px -8px rgba(0, 0, 0, 0.35)
+            `,
+          }}
+        />
+        
+        {/* Video Element Container with Live Relighting */}
+        <div
+          className="absolute inset-2 rounded-lg overflow-hidden"
+          style={filterStyle}
+        >
+          {/* Place your high-res video here */}
+          <video
+            autoPlay
+            loop
+            muted
+            playsInline
+            className="w-full h-full object-cover"
+            style={{
+              filter: "contrast(1.05) saturate(1.1)",
+            }}
+          >
+            {/* Replace with your actual video source */}
+            <source src="/videos/designer-vintage-desk-loop.mp4" type="video/mp4" />
+            {/* Fallback placeholder background */}
+            <div
+              className="absolute inset-0 bg-slate-800 flex items-center justify-center"
+              style={{
+                background: `linear-gradient(135deg, #1e293b 0%, #0f172a 100%)`,
+              }}
+            >
+              <p className="text-slate-400 text-sm font-mono">VIDEO SLLOT READY</p>
+            </div>
+          </video>
+          
+          {/* Laptop screen / lamp emissive glow overlay (night mode) */}
+          <div
+            className="absolute inset-0 bg-gradient-to-t from-amber-400/20 via-transparent to-indigo-400/10"
+            style={{
+              opacity: (1 - sceneTime % 12 / 12) * 0.5,
+              mixBlendMode: "screen",
+            }}
+          />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/**
+ * LAYER 3: Moonlit Petals Canopy Overhead
+ * Cherry blossom arch across top right viewport
+ */
+function MoonlitPetalsCanopy({
+  isVisible,
+  daylight,
+  petalColor,
+}: {
+  isVisible: boolean;
+  daylight: number;
+  petalColor: string;
+}) {
+  if (!isVisible) return null;
+  
+  const nightShadowOpacity = (1 - daylight) * 0.25;
+  const dayProportion = daylight;
+  
+  return (
+    <div
+      className="moonlit-petals-canopy-layer absolute inset-0 pointer-events-none overflow-hidden"
+      style={{ zIndex: 3 }}
+    >
+      {/* Cherry Blossom Arch (Top Right Quadrant) */}
+      <div
+        className="absolute top-0 right-0 w-[60vw] h-[50vh]"
+        style={{
+          opacity: 0.85 - dayProportion * 0.3,
+        }}
+      >
+        <MoonlitPetals
+          background="#000000"
+          blossomColor={petalColor}
+          speed={100}
+          petals={180}
+          wind={35}
+          scale={95}
+          direction="left"
+          glow={60}
+          advanced={{
+            seed: 42,
+            flowers: 12000,
+            flowerSize: 7,
+            clumpSize: 12,
+            twigs: 35,
+            crownReach: 110,
+            branchColor: "#3E3539",
+            highlight: 105,
+            dofBlur: 3.5,
+            petalColor: "#EDE6EA",
+            petalSize: 110,
+            fallSpeed: 95,
+            nearShare: 18,
+            drift: -4,
+            wobble: 105,
+            swayAmp: 9,
+            swayPeriod: 3200,
+            bokehFirst: 2500,
+            bokehEvery: 6500,
+            bokehSize: 9,
+            bokehOpacity: 90,
+            haloSize: 110,
+            hazeColor: "#2F2A2C",
+            hazeOpacity: 45,
+            grain: 8,
+            vignette: 40,
+          }}
+          style={{
+            position: "absolute",
+            top: "-10%",
+            right: "-15%",
+            filter: `drop-shadow(0 12px 24px rgba(0,0,0,${nightShadowOpacity}))`,
+          }}
+        />
+      </div>
+      
+      {/* Soft procedural shadow cast across upper atmosphere */}
+      <div
+        className="absolute top-0 right-0 w-[70vw] h-[40vh]"
+        style={{
+          background: "radial-gradient(ellipse at 70% 0%, rgba(0,0,0,0.25) 0%, transparent 60%)",
+          mixBlendMode: "multiply",
+          opacity: 0.6 - dayProportion * 0.4,
+        }}
+      />
+    </div>
+  );
+}
+
+/**
+ * LAYER 4: Foreground Macro Wildflowers
+ * Large stylized blooms occluding desk base, swaying on cursor
+ */
+function ForegroundWildflowers({
+  isVisible,
+  parallaxY,
+  golden,
+  timestamp,
+}: {
+  isVisible: boolean;
+  parallaxY: number;
+  golden: number;
+  timestamp: number;
+}) {
+  if (!isVisible) return null;
+  
+  return (
+    <div
+      className="foreground-wildflowers-layer absolute inset-0 pointer-events-auto"
+      style={{
+        zIndex: 4,
+        transform: `translateY(${parallaxY * 0.3}px)`,
+        willChange: "transform",
+      }}
+    >
+      {/* Cursor-responsive macro blooms (large SVG-style graphics) */}
+      <div className="absolute bottom-0 left-0 w-full h-[35vh]">
+        {/* Left cluster */}
+        <div className="absolute bottom-0 left-0 w-[40vw] h-full flex items-end justify-start space-x-8">
+          {[...Array(12)].map((_, i) => (
+            <WildflowerBloom
+              key={`left-${i}`}
+              index={i}
+              side="left"
+              golden={golden}
+              timestamp={timestamp}
+              isHoverable={true}
+            />
+          ))}
+        </div>
+        
+        {/* Right cluster */}
+        <div className="absolute bottom-0 right-0 w-[40vw] h-full flex items-end justify-end space-x-10">
+          {[...Array(10)].map((_, i) => (
+            <WildflowerBloom
+              key={`right-${i}`}
+              index={i}
+              side="right"
+              golden={golden}
+              timestamp={timestamp}
+              isHoverable={true}
+            />
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/**
+ * Individual stylized wildflower bloom component
+ */
+function WildflowerBloom({
+  index,
+  side: _side,
+  golden,
+  timestamp,
+  isHoverable,
+}: {
+  index: number;
+  side: "left" | "right";
+  golden: number;
+  timestamp: number;
+  isHoverable: boolean;
+}) {
+  const baseHue = 280 + Math.random() * 70; // Rose to violet
+  const saturation = 0.6 + Math.random() * 0.35;
+  const lightness = 0.55 + Math.random() * 0.25;
+  const sizeMult = 0.8 + Math.random() * 0.6;
+  
+  const [colors] = React.useState(() => ({
+    stroke: oklch({ l: lightness, c: saturation * 0.3, h: baseHue }),
+    fill: oklch({ l: lightness + 0.1, c: saturation, h: baseHue }),
+  }));
+  const { stroke: strokeColor, fill: fillColor } = colors;
+  
+  // Gentle sway animation based on timestamp
+  const swayAngle = Math.sin(timestamp * 0.5 + index * 0.7) * 3;
+  const petalOffset = Math.cos(timestamp * 0.8 + index * 1.1) * 2;
+  
+  return (
+    <div
+      className={`relative flex-shrink-0 transition-transform duration-200 ${
+        isHoverable ? "cursor-pointer hover:scale-110" : ""
+      }`}
+      style={{
+        width: "80px",
+        height: `${120 * sizeMult}px`,
+      }}
+    >
+      <svg
+        viewBox="0 0 80 120"
+        className="w-full h-full"
+        style={{
+          transform: `rotate(${swayAngle}deg) translateY(${petalOffset}px)`,
+          transformOrigin: "bottom center",
+        }}
+      >
+        {/* Stem */}
+        <path
+          d={`M 40 120 Q ${40 + Math.sin(index) * 10} ${120 - 60}, ${40 + Math.cos(index) * 8} ${120 - 100}`}
+          stroke={oklch({ l: 0.35, c: 0.08, h: 125 })}
+          strokeWidth="3"
+          fill="none"
+        />
+        
+        {/* Petals (stylized geometric representation) */}
+        <g fill={fillColor} stroke={strokeColor} strokeWidth="1.5">
+          {[...Array(5)].map((_, i) => {
+            const angle = (i / 5) * Math.PI * 2;
+            const x = 40 + Math.cos(angle) * 25;
+            const y = 70 + Math.sin(angle) * 20;
+            return (
+              <ellipse
+                key={i}
+                cx={x}
+                cy={y}
+                rx="12"
+                ry="18"
+                style={{
+                  animation: `petalWiggle ${2 + Math.random()}s ease-in-out infinite`,
+                  animationDelay: `${Math.random()}s`,
+                }}
+              />
+            );
+          })}
+        </g>
+        
+        {/* Center pistil */}
+        <circle cx="40" cy="70" r="6" fill="#fef08a" stroke="#f59e0b" strokeWidth="1" />
+      </svg>
+      
+      {/* Golden hour backlighting */}
+      <div
+        className="absolute inset-0 pointer-events-none"
+        style={{
+          background: `radial-gradient(circle at 50% 30%, ${oklch({ l: 0.85, c: 0.15, h: 45 })} ${golden * 0.3}, transparent 60%)`,
+          mixBlendMode: "screen",
+        }}
+      />
+    </div>
+  );
+}
+
+/* ==========================================================================
+   Custom Hooks (Memoization Utilities)
+   ========================================================================== */
+
+/** Parallax Y-offset calculation: smooth interpolation from scrollProgress */
+function useMemoParallax(scrollProgress: number, maxY: number, _scaleFactor: number): number {
+  const ref = useRef(0);
+  const target = -scrollProgress * maxY;
+  ref.current = lerp(ref.current, target, 0.08);
+  return ref.current;
+}
+
+/** Thruster flame scale: flares based on scroll velocity */
+function useMemoThrusterFlare(scrollVelocity: number, multiplier: number): number {
+  const ref = useRef(1);
+  const rawVelocity = Math.abs((scrollVelocity || 0) * 1000);
+  const target = clamp(1 + rawVelocity * multiplier, 1, 2.2);
+  ref.current = lerp(ref.current, target, 0.15);
+  return ref.current;
+}
+
+/** Arc reactor pulse: driven by thermal wave sine */
+function useMemoArcReactorPulse(time: number): number {
+  const ref = useRef(1);
+  const target = 0.7 + Math.sin(time * 3.5) * 0.3;
+  ref.current = lerp(ref.current, target, 0.1);
+  return ref.current;
+}
+
+/** Generate meadow gradient from OKLCH terrain color */
+function useMemoMeadowGradient(terrain: any): string {
+  const lBase = (terrain?.l ?? 0.5) * 0.8;
+  const cBase = (terrain?.c ?? 0.15) * 1.2;
+  const hBase = terrain?.h ?? 120;
+  return "linear-gradient(to bottom, " +
+    oklch({ l: lBase + 0.2, c: cBase * 0.6, h: hBase }) + ", " +
+    oklch({ l: lBase, c: cBase, h: hBase }) + ", " +
+    oklch({ l: lBase - 0.1, c: cBase * 1.1, h: hBase + 5 }) + ")";
+}
+
+/** Generate rock strata gradient from terrain palette */
+function useMemoRockStrata(terrain: any): string {
+  const l = terrain?.l ?? 0.3;
+  const c = terrain?.c ?? 0.05;
+  const h = terrain?.h ?? 45;
+  return "linear-gradient(to bottom, " +
+    oklch({ l: l + 0.08, c: c * 0.9, h: h - 3 }) + ", " +
+    oklch({ l: l - 0.05, c: c * 0.85, h: h + 2 }) + ", " +
+    oklch({ l: l - 0.12, c: c * 0.8, h: h + 5 }) + ")";
+}
+
+/** Generate plasma thruster gradient from sun glow color */
+function useMemoPlasmaGradient(sunGlow: any): string {
+  const h = Math.round(sunGlow?.h ?? 190);
+  return "url(#thruster-fire-gradient-" + h + ")";
+}
+
+/** Generate video relight filters based on lighting model */
+function useMemoVideoRelightFilter(light: LightModel): React.CSSProperties {
+  const { palette, grade, cloud, daylight } = light;
+  const nightEmissive = 1 - daylight;
+  
+  return {
+    // Atmospheric tint multiplication and night emissive balance
+    filter: `
+      sepia(${grade.tintAmount * 0.25})
+      saturate(${1 + grade.tintAmount * 0.3})
+      contrast(${1.02 - nightEmissive * 0.08})
+      brightness(${0.88 + daylight * 0.24})
+      drop-shadow(${cloud.keyX * 40}px ${cloud.keyY * 20}px ${24 + Math.abs(cloud.keyX) * 15}px ${palette.sunGlow})`,
+    mixBlendMode: "screen" as const,
+  };
+}
+
+/* ==========================================================================
+   Tailwind Keyframe Extensions (Add to global CSS or tailwind.config.js)
+   ========================================================================== */
+/*
+keyframes: {
+  grassSway: {
+    "0%, 100%": { transform: "rotate(-2deg)" },
+    "50%": { transform: "rotate(2deg)" },
+  },
+  petalWiggle: {
+    "0%, 100%": { transform: "skewX(-3deg)" },
+    "50%": { transform: "skewX(3deg)" },
+  },
+}
+*/
+
+/* ==========================================================================
+   Export Convenience Wrappers
+   ========================================================================== */
+
+export function HeroIslandAnalog(props: Omit<HeroIslandProps, "skyTime">) {
+  return <HeroIsland {...props} skyTime={useSkyTime()} />;
+}
+
+export default HeroIsland;
