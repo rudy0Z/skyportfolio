@@ -56,11 +56,8 @@ export function HeroIslandDemo() {
       <section ref={heroRef} className="relative">
         <HeroIsland
           skyTime={clockTime}
-          scrollProgress={scrollTop / 2000} // Normalized 0→1 over 2000px scroll
+          scrollProgress={scrollTop / 2000}
           scrollVelocity={smoothedVelocity}
-          videoSlotOpacity={Math.max(0, 1 - scrollTop / 500)} // Fade out below
-          onEnterViewport={() => console.log("Hero entered viewport")}
-          onExitViewport={() => console.log("Hero exited viewport")}
           className="bg-gradient-to-b from-[var(--sky-mid)] to-[var(--sky-horizon)]"
         />
 
