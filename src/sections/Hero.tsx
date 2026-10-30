@@ -50,6 +50,21 @@ export function Hero({
     };
   }, []);
 
+  useEffect(() => {
+    const stage = stageRef.current;
+    if (!stage) return;
+
+    const onMouseMove = (e: MouseEvent) => {
+      const nx = (e.clientX / window.innerWidth - 0.5) * 2;
+      const ny = (e.clientY / window.innerHeight - 0.5) * 2;
+      stage.style.setProperty("--tilt-x", `${(nx * 3.5).toFixed(2)}deg`);
+      stage.style.setProperty("--tilt-y", `${(-ny * 2.5).toFixed(2)}deg`);
+    };
+
+    window.addEventListener("mousemove", onMouseMove, { passive: true });
+    return () => window.removeEventListener("mousemove", onMouseMove);
+  }, []);
+
   return (
     <section ref={sectionRef} className="hero" data-hud-section="Home">
       <div ref={stageRef} className="hero-stage">

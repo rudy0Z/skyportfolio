@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, useCallback } from "react";
 
 interface TypeGardenLoaderProps {
   onComplete?: () => void;
+  onDockingStart?: () => void;
   isPersistentLogo?: boolean;
   onOpenFullscreen?: () => void;
 }
@@ -43,6 +44,7 @@ interface Letter {
 
 export function TypeGardenLoader({
   onComplete,
+  onDockingStart,
   isPersistentLogo = false,
   onOpenFullscreen,
 }: TypeGardenLoaderProps) {
@@ -743,6 +745,7 @@ export function TypeGardenLoader({
     const t2 = setTimeout(() => {
       setStatusText("SYSTEM CALIBRATED · DOCKING HORIZON...");
       setStage("docking");
+      if (onDockingStart) onDockingStart();
     }, 2400);
 
     const t3 = setTimeout(() => {
@@ -757,7 +760,7 @@ export function TypeGardenLoader({
       clearTimeout(t2);
       clearTimeout(t3);
     };
-  }, [isPersistentLogo, pal, onComplete]);
+  }, [isPersistentLogo, pal, onComplete, onDockingStart]);
 
   // Docked persistent state: A compact, blooming editorial badge
   if (stage === "docked" || isPersistentLogo) {
@@ -798,16 +801,31 @@ export function TypeGardenLoader({
 
   return (
     <div
-      className={`fixed inset-0 z-[100] flex flex-col items-center justify-center bg-black transition-all duration-800 ${
-        stage === "docking"
-          ? "opacity-0 scale-90 pointer-events-none"
-          : "opacity-100 scale-100"
+      className={`fixed inset-0 z-[100] flex flex-col items-center justify-center transition-colors duration-800 ${
+        stage === "docking" ? "bg-black/0 pointer-events-none" : "bg-black pointer-events-auto"
       }`}
     >
-      <canvas ref={canvasRef} className="absolute inset-0 w-full h-full block" />
+      {/* Gliding Canvas Layer: Coordinates smoothly translate into top notch socket */}
+      <div
+        className="absolute inset-0 w-full h-full flex items-center justify-center transition-all duration-800"
+        style={{
+          transform:
+            stage === "docking"
+              ? "translateY(calc(-50vh + 32px)) scale(0.28)"
+              : "translateY(0) scale(1)",
+          transitionTimingFunction: "cubic-bezier(0.16, 1, 0.3, 1)",
+          opacity: stage === "docking" ? 0.35 : 1,
+        }}
+      >
+        <canvas ref={canvasRef} className="w-full h-full block" />
+      </div>
 
       {/* Atmospheric calibration overlay */}
-      <div className="absolute bottom-8 left-8 right-8 flex flex-col sm:flex-row items-center justify-between gap-4 pointer-events-auto">
+      <div
+        className={`absolute bottom-8 left-8 right-8 flex flex-col sm:flex-row items-center justify-between gap-4 transition-opacity duration-500 ${
+          stage === "docking" ? "opacity-0 pointer-events-none" : "opacity-100 pointer-events-auto"
+        }`}
+      >
         <div className="flex items-center gap-3 font-mono text-[11px] uppercase tracking-[0.2em] text-white/70">
           <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
           <span>{statusText}</span>

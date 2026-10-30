@@ -9,6 +9,7 @@ import { TypeGardenLoader } from "@/components/TypeGardenLoader";
 import { CelestialNight } from "@/components/CelestialNight";
 import { ButterflyCursor } from "@/components/ButterflyCursor";
 import { DevMenu } from "@/components/DevMenu";
+import { ThermalSkyClock } from "@/sky/ThermalSkyClock";
 import { type MusicWidgetStyle } from "@/components/music/MusicWidgetHost";
 
 // Page & Section Components
@@ -43,7 +44,9 @@ function PortfolioContent() {
   const [hudStyle, setHudStyle] = useState<HudStyle>("pinui");
   const [musicStyle, setMusicStyle] = useState<MusicWidgetStyle>("pinui");
   const [hasLoadedGarden, setHasLoadedGarden] = useState(false);
+  const [isLoaderDocked, setIsLoaderDocked] = useState(false);
   const [fullscreenGarden, setFullscreenGarden] = useState(false);
+  const [clockSize, setClockSize] = useState<"thumbnail" | "full">("thumbnail");
 
   // Dev Menu feature flags
   const [showLayerA, setShowLayerA] = useState(true);
@@ -91,14 +94,42 @@ function PortfolioContent() {
       {/* ── Garden Butterfly Cursor Trail ───────────────────────────── */}
       <ButterflyCursor enabled={butterflyEnabled} />
 
-      {/* ── Persistent Header with Docked Botanical Logo ─────────────── */}
-      <Header onOpenGarden={() => setFullscreenGarden(true)} />
+      {/* ── Fixed Top-Right Corner Clock (Outside Central Notch) ─────── */}
+      <div
+        className="fixed top-3.5 right-4 sm:right-6 z-50 pointer-events-auto cursor-pointer"
+        onClick={() => {
+          if (clockSize === "thumbnail") {
+            setClockSize("full");
+          }
+        }}
+      >
+        <ThermalSkyClock
+          size={clockSize}
+          onSizeChange={setClockSize}
+          expandable={true}
+        />
+      </div>
+      {clockSize === "full" && (
+        <div
+          className="fixed inset-0 z-40 bg-black/40 backdrop-blur-sm"
+          onClick={() => setClockSize("thumbnail")}
+          aria-hidden="true"
+        />
+      )}
+
+      {/* ── Persistent Top Navigation Notch ─────────────── */}
+      <Header
+        isLoaderDocked={isLoaderDocked}
+        onOpenGarden={() => setFullscreenGarden(true)}
+      />
 
       {/* ── Type Garden Blooming Loader (Mounts on initial load or on request) ── */}
       {(!hasLoadedGarden || fullscreenGarden) && (
         <TypeGardenLoader
+          onDockingStart={() => setIsLoaderDocked(true)}
           onComplete={() => {
             setHasLoadedGarden(true);
+            setIsLoaderDocked(true);
             setFullscreenGarden(false);
           }}
         />

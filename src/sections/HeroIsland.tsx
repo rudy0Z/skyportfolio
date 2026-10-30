@@ -4,6 +4,8 @@ import { useRef } from "react"
 import { getLight, type LightModel } from "@/lib/lighting"
 import { useSkyTime } from "@/lib/useTimeOfDay"
 import GlimmerVale from "@/components/originkit/GlimmerVale"
+import Aetherglint from "@/components/originkit/Aetherglint"
+import BluebellPass from "@/components/originkit/BluebellPass"
 import BloomingFlower from "@/components/originkit/BloomingFlower"
 import MoonlitPetals from "@/components/originkit/MoonlitPetals"
 import { oklch } from "@/lib/color"
@@ -62,7 +64,15 @@ export function HeroIsland({
   const light = getLight(skyTime)
 
   return (
-    <div ref={containerRef} className={`hero-island-root relative w-full h-full ${className}`}>
+    <div
+      ref={containerRef}
+      className={`hero-island-root relative w-full h-full ${className}`}
+      style={{
+        transform: "perspective(1200px) rotateX(var(--tilt-y, 0deg)) rotateY(var(--tilt-x, 0deg))",
+        transformStyle: "preserve-3d",
+        transition: "transform 140ms ease-out",
+      }}
+    >
       {/* ============================================================
           LAYER 0.5: SOKOVIA KEEL & PLASMA THRUSTERS (z-index: 0)
           ============================================================ */}
@@ -75,16 +85,16 @@ export function HeroIsland({
       )}
 
       {/* ============================================================
-          LAYER 1: CINEMATIC MEADOW HORIZON (GlimmerVale Integration)
-          z-index: 1 — Real WebGL particle terrain with 72k ridge points
+          LAYER 1: CINEMATIC MEADOW HORIZON (Aetherglint + BluebellPass + GlimmerVale)
+          z-index: 1 — Composited WebGL grass, carpet blooms & particle ridge
           ============================================================ */}
       {showLayerA && (
         <MeadowBackdrop scrollProgress={scrollProgress} light={light} />
       )}
 
       {/* ============================================================
-          LAYER 2: CHARACTER VIDEO SLOT
-          z-index: 2 — Obsidian glass frame with live relighting
+          LAYER 2: CHARACTER VIDEO SLOT ON HILL CREST
+          z-index: 2 — Obsidian glass frame with live relighting & portrait
           ============================================================ */}
       <VideoCharacterSlot
         visible={showLayerA}
@@ -92,6 +102,7 @@ export function HeroIsland({
         cloudKeyX={light.cloud.keyX}
         cloudKeyY={light.cloud.keyY}
         sunGlow={light.palette.sunGlow}
+        scrollProgress={scrollProgress}
       />
 
       {/* ============================================================
@@ -301,7 +312,7 @@ const SokoviaKeelThrusters = (props: SokoviaKeelThrustersProps) => {
 }
 
 /* ==========================================================================
-   Sub-Component: Meadow Backdrop with GlimmerVale
+   Sub-Component: Meadow Backdrop with Aetherglint, BluebellPass & GlimmerVale
    ============================================================ */
 
 interface MeadowBackdropProps {
@@ -319,40 +330,124 @@ function MeadowBackdrop({ scrollProgress, light }: MeadowBackdropProps) {
         zIndex: 1,
         transform: `translateY(${parallaxY}px)`,
         willChange: "transform",
-        maskImage: "linear-gradient(to top, black 65%, transparent 100%)",
-        WebkitMaskImage: "linear-gradient(to top, black 65%, transparent 100%)",
+        maskImage: "linear-gradient(to top, black 70%, transparent 100%)",
+        WebkitMaskImage: "linear-gradient(to top, black 70%, transparent 100%)",
       }}
     >
-      <GlimmerVale
-        speed={50}
-        scale={100}
-        density={85}
-        sparkle={65}
-        background="#000000"
-        skyTop={light.stops.zenith.toString()}
-        skyHorizon={light.stops.horizon.toString()}
-        advanced={{
-          crestColor: light.palette.cloudRim,
-          slopeColor: light.palette.terrain,
-          slopeDeep: light.stops.terrain.toString(),
-          glowColor: light.palette.sunGlow,
-          skyMid: light.stops.mid.toString(),
-          pointSize: 100,
-          midCount: 150,
-          bokehCount: 120,
-          grassCount: 380,
-          glintCount: 30,
-          seed: 42,
-          hover: 50,
+      {/* ── Sublayer 1A: Aetherglint Prairie Grass & Rock Mounds ── */}
+      <div
+        className="aetherglint-meadow-layer absolute inset-0 transition-opacity duration-700 pointer-events-auto"
+        style={{
+          opacity: Math.max(0.4, light.daylight),
+          mixBlendMode: "normal",
         }}
-        style={{ width: "100%", height: "100%" }}
-      />
+      >
+        <Aetherglint
+          speed={40}
+          wind={85}
+          density={65}
+          scale={160}
+          background="transparent"
+          grassColor={light.palette.terrain}
+          tipColor={light.palette.cloudRim}
+          flowerColor={light.palette.sunGlow}
+          advanced={{
+            litColor: light.palette.cloudRim,
+            hotColor: light.palette.sunGlow,
+            shadowColor: light.stops.terrain.toString(),
+            rootColor: light.stops.zenith.toString(),
+            stemColor: light.palette.terrain,
+            rockColor: "#2a2228",
+            rockLitColor: light.palette.cloudRim,
+            rockDarkColor: "#141014",
+            glowColor: light.palette.sunGlow,
+            glowAmount: 35,
+            moundHeight: 6,
+            bladeLength: 95,
+            bladeWidth: 90,
+          }}
+          style={{
+            position: "absolute",
+            inset: 0,
+            width: "100%",
+            height: "100%",
+            minWidth: 0,
+            minHeight: 0,
+          }}
+        />
+      </div>
+
+      {/* ── Sublayer 1B: BluebellPass Deep Night Horizon & Carpet Blooms ── */}
+      <div
+        className="bluebell-pass-layer absolute inset-0 transition-opacity duration-700 pointer-events-none"
+        style={{
+          opacity: Math.max(0.35, (1 - light.daylight) * 0.95),
+          mixBlendMode: light.daylight < 0.5 ? "screen" : "soft-light",
+        }}
+      >
+        <BluebellPass
+          style={{
+            position: "absolute",
+            inset: 0,
+            width: "100%",
+            height: "100%",
+            aspectRatio: "auto",
+          }}
+          advanced={{
+            skyTop: light.stops.zenith.toString(),
+            skyMid: light.stops.mid.toString(),
+            skyHorizon: light.stops.horizon.toString(),
+            carpetCount: 2600,
+            flowerCount: 340,
+            grassCount: 1100,
+            milkyOpacity: (1 - light.daylight) * 70,
+            cloudOpacity: (1 - light.daylight) * 45,
+            glowSize: 140,
+            hazeColor: light.palette.cloudRim,
+            grassLit: light.palette.terrain,
+          }}
+        />
+      </div>
+
+      {/* ── Sublayer 1C: GlimmerVale Particle Ridge Glitter & Glints ── */}
+      <div
+        className="glimmervale-ridge-layer absolute inset-0 pointer-events-none"
+        style={{
+          opacity: 0.7,
+          mixBlendMode: "screen",
+        }}
+      >
+        <GlimmerVale
+          speed={45}
+          scale={90}
+          density={70}
+          sparkle={60}
+          background="#000000"
+          skyTop={light.stops.zenith.toString()}
+          skyHorizon={light.stops.horizon.toString()}
+          advanced={{
+            crestColor: light.palette.cloudRim,
+            slopeColor: light.palette.terrain,
+            slopeDeep: light.stops.terrain.toString(),
+            glowColor: light.palette.sunGlow,
+            skyMid: light.stops.mid.toString(),
+            pointSize: 90,
+            midCount: 120,
+            bokehCount: 90,
+            grassCount: 280,
+            glintCount: 25,
+            seed: 42,
+            hover: 50,
+          }}
+          style={{ width: "100%", height: "100%" }}
+        />
+      </div>
     </div>
   )
 }
 
 /* ==========================================================================
-   Sub-Component: Video Character Slot with Live Relighting
+   Sub-Component: Video Character Slot with Live Relighting & Hill Crest Anchor
    ============================================================ */
 
 interface VideoCharacterSlotProps {
@@ -361,6 +456,7 @@ interface VideoCharacterSlotProps {
   cloudKeyX: number
   cloudKeyY: number
   sunGlow: string
+  scrollProgress?: number
 }
 
 function VideoCharacterSlot({
@@ -369,6 +465,7 @@ function VideoCharacterSlot({
   cloudKeyX,
   cloudKeyY,
   sunGlow,
+  scrollProgress = 0,
 }: VideoCharacterSlotProps) {
   if (!visible) return null
 
@@ -377,11 +474,17 @@ function VideoCharacterSlot({
   // Calculate directional rim-light shadow offset
   const rimShadowX = cloudKeyX * 30
   const rimShadowY = cloudKeyY * 15
+  const parallaxY = lerp(0, -scrollProgress * (MAX_PARALLAX_Y * 0.85), PARALLAX_SMOOTHING)
 
   return (
     <div
-      className="video-slot-container absolute inset-0 flex items-center justify-center pointer-events-none"
-      style={{ zIndex: 2, willChange: "opacity" }}
+      className="video-slot-container absolute left-0 right-0 flex items-center justify-center pointer-events-none"
+      style={{
+        zIndex: 2,
+        bottom: "24vh",
+        transform: `translateY(${parallaxY}px)`,
+        willChange: "transform, opacity",
+      }}
     >
       <div
         data-slot="character-video-slot"
@@ -405,7 +508,7 @@ function VideoCharacterSlot({
           }}
         />
 
-        {/* Video Element with Live Relighting Filters */}
+        {/* Video / Visual Media Container with Live Relighting Filters */}
         <div
           className="absolute inset-2 rounded-lg overflow-hidden"
           style={{
@@ -416,17 +519,57 @@ function VideoCharacterSlot({
               drop-shadow(${rimShadowX}px ${rimShadowY}px 20px ${sunGlow})
             `,
             backgroundColor: `rgba(245, 158, 11, ${nightEmissive * 0.15})`,
-            mixBlendMode: "screen" as const,
           }}
         >
-          {/* Placeholder video slot */}
+          {/* Real visual media: portrait cutout on hill crest with studio ambient backing */}
           <div
-            className="w-full h-full bg-slate-800 flex items-center justify-center"
+            className="relative w-full h-full flex items-center justify-center overflow-hidden"
             style={{
-              background: `linear-gradient(135deg, #1e293b 0%, #0f172a 100%)`,
+              background: `linear-gradient(135deg, rgba(30, 41, 59, 0.95) 0%, rgba(15, 23, 42, 0.98) 100%)`,
             }}
           >
-            <p className="text-slate-400 text-sm font-mono">VIDEO SLOT READY</p>
+            {/* Ambient solar backlight radial glow */}
+            <div
+              className="absolute inset-0 pointer-events-none"
+              style={{
+                background: `radial-gradient(ellipse at 50% 45%, ${sunGlow} 0%, transparent 65%)`,
+                opacity: 0.12 * daylight + 0.06,
+              }}
+            />
+
+            {/* Optional video element with fallback error handling */}
+            <video
+              autoPlay
+              loop
+              muted
+              playsInline
+              className="absolute inset-0 w-full h-full object-cover pointer-events-none opacity-0 transition-opacity duration-700"
+              onError={(e) => {
+                e.currentTarget.style.display = "none"
+              }}
+            >
+              <source src="/videos/designer-vintage-desk-loop.mp4" type="video/mp4" />
+            </video>
+
+            {/* Real visual media: /portrait-cutout.png */}
+            <div className="relative z-10 flex flex-col items-center justify-end w-full h-full pt-3">
+              <img
+                src="/portrait-cutout.png"
+                alt="Rudraksh Singh - Product Designer & Engineer"
+                className="h-[88%] w-auto max-w-[85%] object-contain select-none pointer-events-none drop-shadow-[0_16px_28px_rgba(0,0,0,0.65)] transition-transform duration-500 hover:scale-[1.02]"
+                loading="eager"
+              />
+            </div>
+
+            {/* Delicate border highlights and telemetry badge */}
+            <div className="absolute top-2.5 left-3 z-20 flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-black/50 backdrop-blur-md border border-white/10 text-[10px] font-mono text-white/80">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+              <span>LIVE STUDIO FEED</span>
+            </div>
+
+            <div className="absolute bottom-2 right-3 z-20 text-[9px] font-mono text-white/40 tracking-wider uppercase">
+              Altitude 01 · Knoll Crest
+            </div>
           </div>
         </div>
       </div>

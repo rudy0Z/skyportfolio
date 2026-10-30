@@ -14,6 +14,7 @@ interface FlagshipProject {
   brandColor: string;
   caseHref: string;
   badge: string;
+  altitudeTag: string;
   renderScreenSvg: () => ReactNode;
 }
 
@@ -24,6 +25,7 @@ const FLAGSHIP_PROJECTS: FlagshipProject[] = [
     title: "FlytBase Sentinel",
     year: "2026",
     discipline: "Autonomous Systems · Emergency Response Command",
+    altitudeTag: "ALT +1,500M · SECTOR 04 NORTH RIDGE",
     tagline:
       "A wildfire initial-attack aerial command interface built around FlytBase's 48-minute challenge baseline and 90-second target. AI compiles evidence; a human authorizes escalation.",
     problem:
@@ -109,6 +111,7 @@ const FLAGSHIP_PROJECTS: FlagshipProject[] = [
     title: "LokAI",
     year: "2025",
     discipline: "Legal AI Systems · Consumer Protection",
+    altitudeTag: "ALT +950M · CONSUMER REGULATORY AIRSPACE",
     tagline:
       "A deterministic Indian legal-AI consumer refund guide. Verifies facts against statutory databases, shows grounded citations, and stops before generating unsafe legal advice.",
     problem:
@@ -219,6 +222,7 @@ const FLAGSHIP_PROJECTS: FlagshipProject[] = [
     title: "Feul.AI",
     year: "2025",
     discipline: "Vernacular Voice AI · Ethical Contributor Platform",
+    altitudeTag: "ALT +400M · LOW ELEVATION GROUND COMM",
     tagline:
       "A voice-data marketplace concept built around transparent micro-payout contracts, real-time acoustic waveform validation, and consent repair for non-English contributors.",
     problem:
@@ -264,7 +268,7 @@ const FLAGSHIP_PROJECTS: FlagshipProject[] = [
         {/* Real-time Dynamic Acoustic Waveform Graph */}
         <g transform="translate(26, 140)">
           {Array.from({ length: 48 }, (_, i) => {
-            const h = 8 + Math.sin(i * 0.45) * 22 + (i % 3 === 0 ? 12 : 0);
+            const h = Math.max(3, 8 + Math.sin(i * 0.45) * 22 + (i % 3 === 0 ? 12 : 0));
             return (
               <rect
                 key={i}
@@ -320,22 +324,103 @@ const FLAGSHIP_PROJECTS: FlagshipProject[] = [
 export function StackingProjects() {
   return (
     <section id="work" className="stacking-projects-section relative w-full py-24 px-4 sm:px-8 max-w-6xl mx-auto">
+      {/* Anchor for deep links */}
+      <div id="projects" className="absolute -top-24" />
+
+      {/* ── ALTITUDE STORY NARRATIVE: DESCENT FLIGHT GUIDE ── */}
+      <div className="mb-10 p-4 sm:p-5 rounded-2xl border border-white/10 bg-black/45 backdrop-blur-xl shadow-xl">
+        <div className="flex items-center justify-between gap-3 pb-3 border-b border-white/10 text-white/50 font-mono text-[10px] uppercase tracking-[0.2em]">
+          <div className="flex items-center gap-2">
+            <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse shadow-[0_0_8px_rgba(52,211,153,0.8)]" />
+            <span>ORBITAL DESCENT TRAJECTORY // 4-STAGE ALTITUDE CONTINUUM</span>
+          </div>
+          <span className="hidden sm:inline text-white/40">VECTOR: HIGH ORBIT → BEDROCK ZERO</span>
+        </div>
+
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 pt-3 font-mono">
+          {/* Altitude 01 */}
+          <div className="flex flex-col gap-1 p-2.5 rounded-lg bg-white/[0.02] border border-white/5">
+            <div className="flex items-center justify-between text-[9px] text-white/40">
+              <span>STAGE 01</span>
+              <span>+12,400M</span>
+            </div>
+            <div className="text-[11px] font-semibold text-white/80">
+              Altitude 01: Stratosphere +12,400m
+            </div>
+            <div className="text-[9.5px] text-white/40">
+              Floating Sky-Island Apex
+            </div>
+          </div>
+
+          {/* Altitude 02 */}
+          <div className="flex flex-col gap-1 p-2.5 rounded-lg bg-white/[0.02] border border-white/5">
+            <div className="flex items-center justify-between text-[9px] text-white/40">
+              <span>STAGE 02</span>
+              <span>+8,200M</span>
+            </div>
+            <div className="text-[11px] font-semibold text-white/80">
+              Altitude 02: Island Keel +8,200m
+            </div>
+            <div className="text-[9.5px] text-white/40">
+              Tectonic Keel &amp; Underside Thrusters
+            </div>
+          </div>
+
+          {/* Altitude 03 (Active) */}
+          <div className="flex flex-col gap-1 p-2.5 rounded-lg bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 shadow-[inset_0_0_12px_rgba(16,185,129,0.1)]">
+            <div className="flex items-center justify-between text-[9px] text-emerald-400">
+              <span className="flex items-center gap-1 font-bold">
+                <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                ACTIVE STAGE
+              </span>
+              <span className="font-bold">+1,500M</span>
+            </div>
+            <div className="text-[11px] font-bold text-white">
+              Altitude 03: Orbital Pavilions +1,500m
+            </div>
+            <div className="text-[9.5px] text-emerald-300/80">
+              Sentinel, LokAI, Feul.AI Framing
+            </div>
+          </div>
+
+          {/* Altitude 04 */}
+          <div className="flex flex-col gap-1 p-2.5 rounded-lg bg-white/[0.02] border border-white/5">
+            <div className="flex items-center justify-between text-[9px] text-white/40">
+              <span>STAGE 04</span>
+              <span>00:00M</span>
+            </div>
+            <div className="text-[11px] font-semibold text-white/80">
+              Altitude 04: Bedrock Crater 00:00m
+            </div>
+            <div className="text-[9.5px] text-white/40">
+              Ground Datum Touchdown Horizon
+            </div>
+          </div>
+        </div>
+      </div>
+
       <div className="mb-14">
-        <div className="flex items-center gap-2 font-mono text-[10px] uppercase tracking-[0.22em] text-white/50 mb-3">
-          <span className="h-1.5 w-1.5 rounded-full bg-amber-400" />
-          <span>PHASE 1 // POINT 4 — THREE SEPARATE STACKING CARDS</span>
+        <div className="flex flex-wrap items-center justify-between gap-3 mb-3">
+          <div className="flex items-center gap-2 font-mono text-[10.5px] uppercase tracking-[0.2em] text-emerald-300">
+            <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse shadow-[0_0_8px_rgba(52,211,153,0.8)]" />
+            <span>ALTITUDE 03 // ORBITAL PAVILIONS (+1,500M MSL)</span>
+          </div>
+          <span className="font-mono text-[10px] text-white/40 uppercase tracking-wider">
+            THREE CONSECUTIVE STACKING ARCHITECTURAL DOSSIERS
+          </span>
         </div>
         <h2 className="font-serif text-[38px] sm:text-[52px] font-normal leading-[1.05] tracking-tight text-white">
           Flagship Systems &amp; Case Studies
         </h2>
-        <p className="mt-3 font-sans text-[16px] text-white/60 max-w-2xl font-light leading-relaxed">
-          Three separate architectural cards that pin and stack upon each other as you scroll down.
-          Each project solves a concrete tension between speed, human agency, and verified reality.
+        <p className="mt-3 font-sans text-[16px] text-white/70 max-w-2xl font-light leading-relaxed">
+          Descending from the floating island into +1,500m atmospheric orbit, three architectural cards
+          pin and stack upon each other as you scroll down. Each dossier investigates a critical tension between
+          autonomous artificial intelligence, the human verification window, and verified physical reality.
         </p>
       </div>
 
       {/* Sticky Stacking Track */}
-      <div className="relative flex flex-col gap-20 pb-32">
+      <div className="relative flex flex-col gap-20 pb-16">
         {FLAGSHIP_PROJECTS.map((proj, idx) => (
           <div
             key={proj.id}
@@ -349,12 +434,15 @@ export function StackingProjects() {
           >
             {/* Top Card Kicker */}
             <div className="flex flex-wrap items-center justify-between gap-3 pb-6 border-b border-white/10">
-              <div className="flex items-center gap-3">
+              <div className="flex flex-wrap items-center gap-3">
                 <span className="font-mono text-[12px] font-bold text-white/40">
                   {proj.index}
                 </span>
                 <span className="px-2.5 py-1 rounded-full bg-white/10 font-mono text-[9.5px] uppercase tracking-wider text-amber-300 border border-white/15">
                   {proj.badge}
+                </span>
+                <span className="font-mono text-[10.5px] text-emerald-400 font-medium bg-emerald-950/50 px-2.5 py-0.5 rounded border border-emerald-500/20">
+                  {proj.altitudeTag}
                 </span>
                 <span className="font-mono text-[11px] text-white/50">
                   {proj.year}
@@ -430,6 +518,27 @@ export function StackingProjects() {
             </div>
           </div>
         ))}
+      </div>
+
+      {/* ── DESCENT BRIDGE: ALTITUDE 03 -> ALTITUDE 04 (BEDROCK CRATER) ── */}
+      <div className="mt-8 pt-8 border-t border-white/10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 font-mono text-[11px] text-white/50">
+        <div className="flex items-center gap-3">
+          <span className="h-2 w-2 rounded-full bg-emerald-400 animate-ping" />
+          <span>
+            DESCENT CONTINUUM: ENTERING GROUND DATUM // ALTITUDE 04: BEDROCK CRATER (00:00M)
+          </span>
+        </div>
+        <a
+          href="#crater"
+          onClick={(e) => {
+            e.preventDefault();
+            document.getElementById("crater")?.scrollIntoView({ behavior: "smooth" });
+          }}
+          className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white/5 hover:bg-white/10 border border-white/15 text-white/70 hover:text-white transition-all text-[11px]"
+        >
+          <span>Touchdown at Excavation Horizon</span>
+          <span>↓</span>
+        </a>
       </div>
     </section>
   );

@@ -34,14 +34,38 @@ export function ExcavationCraterFooter() {
     return () => clearInterval(interval);
   }, []);
 
-  const handleCopyEmail = () => {
-    navigator.clipboard?.writeText("rudraksh.singhh@outlook.com");
+  // Close consultation modal on Escape key
+  useEffect(() => {
+    if (!showCallModal) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        setShowCallModal(false);
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [showCallModal]);
+
+  const handleCopyEmail = async () => {
+    try {
+      if (navigator?.clipboard?.writeText) {
+        await navigator.clipboard.writeText("rudraksh.singhh@outlook.com");
+      }
+    } catch {
+      // Graceful fallback for restricted environments
+    }
     setCopied(true);
     setTimeout(() => setCopied(false), 2500);
   };
 
-  const handleCopyHandle = () => {
-    navigator.clipboard?.writeText("@rudrakshsinghh");
+  const handleCopyHandle = async () => {
+    try {
+      if (navigator?.clipboard?.writeText) {
+        await navigator.clipboard.writeText("@rudrakshsinghh");
+      }
+    } catch {
+      // Graceful fallback for restricted environments
+    }
     setHandleCopied(true);
     setTimeout(() => setHandleCopied(false), 2500);
   };
@@ -51,6 +75,7 @@ export function ExcavationCraterFooter() {
   };
 
   const handleIgnitionToggle = () => {
+    if (ignitionActive || showCallModal) return;
     setIgnitionActive(true);
     setTimeout(() => {
       setShowCallModal(true);
@@ -59,111 +84,200 @@ export function ExcavationCraterFooter() {
   };
 
   return (
-    <footer className="excavation-crater-footer relative w-full overflow-hidden bg-gradient-to-b from-transparent via-[#0b0c10] to-[#050608] pt-20 pb-16 text-white border-t border-white/10">
+    <footer id="crater" className="excavation-crater-footer relative w-full overflow-hidden bg-gradient-to-b from-[#06070a] via-[#0b0c10] to-[#040507] pt-20 pb-16 text-white border-t border-white/10">
       {/* ============================================================== */}
       {/* EXCAVATION CRATER RIM PLACEHOLDER SVG                          */}
       {/* The massive geological hollow in bedrock where island lifted   */}
       {/* ============================================================== */}
+      {/* ============================================================== */}
+      {/* EXPANSIVE BEDROCK HORIZON & CRATER UPLIFT PANORAMA             */}
+      {/* The massive geological hollow in bedrock where island lifted   */}
+      {/* ============================================================== */}
       <div className="relative w-full max-w-7xl mx-auto px-4 sm:px-8 mb-16">
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center gap-2 font-mono text-[10px] uppercase tracking-[0.2em] text-white/50">
-            <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
+        {/* Telemetry Header */}
+        <div className="flex flex-wrap items-center justify-between gap-3 mb-6 pb-3 border-b border-white/10">
+          <div className="flex items-center gap-2.5 font-mono text-[10.5px] uppercase tracking-[0.2em] text-emerald-300">
+            <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse shadow-[0_0_8px_rgba(52,211,153,0.8)]" />
             <span>ALTITUDE 04 // THE EXCAVATION CRATER (BEDROCK ZERO)</span>
           </div>
-          <span className="font-mono text-[9.5px] uppercase tracking-wider text-white/40">
-            SURAT 21°10&apos;N 72°49&apos;E · ELEVATION -42M
-          </span>
+          <div className="flex flex-wrap items-center gap-3 font-mono text-[10px] text-white/50">
+            <span>SURAT 21°10&apos;N 72°49&apos;E</span>
+            <span>·</span>
+            <span className="text-emerald-400 font-semibold">GROUND DATUM 00:00M BEDROCK HORIZON</span>
+          </div>
         </div>
 
-        {/* Detailed Crater Placeholder SVG */}
-        <div className="w-full rounded-2xl border border-white/10 bg-black/60 backdrop-blur-md overflow-hidden p-4">
-          <svg viewBox="0 0 1200 420" className="w-full h-auto max-h-[360px] overflow-visible">
-            <defs>
-              <linearGradient id="craterRock" x1="0%" y1="0%" x2="0%" y2="100%">
-                <stop offset="0%" stopColor="#2c2a26" />
-                <stop offset="50%" stopColor="#1a1917" />
-                <stop offset="100%" stopColor="#0a0a0c" />
-              </linearGradient>
-              <linearGradient id="hollowGlow" x1="50%" y1="0%" x2="50%" y2="100%">
-                <stop offset="0%" stopColor="#059669" stopOpacity="0.15" />
-                <stop offset="100%" stopColor="#059669" stopOpacity="0" />
-              </linearGradient>
-            </defs>
+        {/* Expansive Bedrock Horizon Panorama */}
+        <div className="relative w-full overflow-hidden rounded-3xl border border-white/15 bg-gradient-to-b from-[#0e1017]/90 via-[#07080c]/95 to-[#020204] shadow-[0_24px_80px_rgba(0,0,0,0.8),inset_0_1px_1px_rgba(255,255,255,0.12)]">
+          {/* Ambient horizon backdrop lighting */}
+          <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_50%_at_50%_100%,rgba(16,185,129,0.12),transparent_70%)] pointer-events-none" />
+          <div className="absolute inset-x-0 top-0 h-24 bg-gradient-to-b from-white/[0.04] to-transparent pointer-events-none" />
 
-            {/* Distant Quarry Walls */}
-            <path
-              d="M 0 120
-                 C 200 90, 420 140, 600 130
-                 C 780 120, 1000 85, 1200 110
-                 L 1200 420 L 0 420 Z"
-              fill="#131418"
-            />
+          {/* Expansive Panoramic Geological Crater SVG */}
+          <div className="relative w-full px-2 sm:px-6 pt-6 pb-2">
+            <svg
+              viewBox="0 0 1200 420"
+              className="crater-rim w-full h-auto max-h-[420px] overflow-visible block"
+              aria-label="Geological Bedrock Excavation Crater Horizon"
+            >
+              <defs>
+                <linearGradient id="craterRock" x1="0%" y1="0%" x2="0%" y2="100%">
+                  <stop offset="0%" stopColor="#35332d" />
+                  <stop offset="40%" stopColor="#22201c" />
+                  <stop offset="85%" stopColor="#121215" />
+                  <stop offset="100%" stopColor="#050608" />
+                </linearGradient>
+                <linearGradient id="hollowGlow" x1="50%" y1="0%" x2="50%" y2="100%">
+                  <stop offset="0%" stopColor="#059669" stopOpacity="0.25" />
+                  <stop offset="100%" stopColor="#059669" stopOpacity="0" />
+                </linearGradient>
+                <radialGradient id="upliftCoreGlow" cx="50%" cy="50%" r="50%">
+                  <stop offset="0%" stopColor="#10b981" stopOpacity="0.32" />
+                  <stop offset="45%" stopColor="#059669" stopOpacity="0.12" />
+                  <stop offset="80%" stopColor="#047857" stopOpacity="0.04" />
+                  <stop offset="100%" stopColor="#047857" stopOpacity="0" />
+                </radialGradient>
+              </defs>
 
-            {/* Deep Excavation Pit / Crater Rim Silhouette */}
-            <path
-              d="M -40 220
-                 C 140 225, 260 270, 360 300
-                 C 480 330, 720 330, 840 300
-                 C 940 270, 1060 225, 1240 220
-                 L 1240 420 L -40 420 Z"
-              fill="url(#craterRock)"
-              stroke="#3a3731"
-              strokeWidth="1.5"
-            />
+              {/* EXCAVATION CRATER RIM // BEDROCK ZERO HORIZON */}
+              {/* Distant Stratigraphic Quarry Rim */}
+              <path
+                d="M 0 110
+                   C 180 80, 360 135, 600 125
+                   C 840 115, 1020 75, 1200 100
+                   L 1200 420 L 0 420 Z"
+                fill="#0f1117"
+                opacity="0.9"
+              />
 
-            {/* Glowing Uplift Hollow Core (Where Island Lifted Off) */}
-            <ellipse cx="600" cy="330" rx="340" ry="70" fill="url(#hollowGlow)" />
-            <ellipse
-              cx="600"
-              cy="330"
-              rx="280"
-              ry="50"
-              fill="none"
-              stroke="#10b981"
-              strokeWidth="1"
-              strokeDasharray="4 8"
-              opacity="0.4"
-            />
+              {/* Midground Geological Terraces & Quarry Fault Benches */}
+              <path
+                d="M -20 160
+                   C 160 165, 320 205, 480 220
+                   C 640 235, 800 230, 960 195
+                   C 1080 170, 1160 155, 1220 150
+                   L 1220 420 L -20 420 Z"
+                fill="#181716"
+                stroke="#292622"
+                strokeWidth="1.2"
+              />
 
-            {/* Geological Quarry Bench Terraces & Fault Lines */}
-            <path
-              d="M 120 280 C 240 310, 380 340, 520 350"
-              stroke="#44403c"
-              strokeWidth="2"
-              fill="none"
-              strokeDasharray="3 3"
-            />
-            <path
-              d="M 680 350 C 820 340, 960 310, 1080 280"
-              stroke="#44403c"
-              strokeWidth="2"
-              fill="none"
-              strokeDasharray="3 3"
-            />
+              {/* Deep Excavation Pit / Crater Rim Silhouette (crater-rim) */}
+              <path
+                d="M -40 220
+                   C 140 225, 260 270, 360 300
+                   C 480 330, 720 330, 840 300
+                   C 940 270, 1060 225, 1240 220
+                   L 1240 420 L -40 420 Z"
+                fill="url(#craterRock)"
+                stroke="#4a443a"
+                strokeWidth="1.5"
+                className="crater-rim"
+              />
 
-            {/* Surveyor Tripods & Beacon Lights on Crater Rim */}
-            <g transform="translate(240, 245)">
-              <line x1="0" y1="0" x2="-8" y2="30" stroke="#71717a" strokeWidth="2" />
-              <line x1="0" y1="0" x2="8" y2="30" stroke="#71717a" strokeWidth="2" />
-              <line x1="0" y1="0" x2="0" y2="30" stroke="#71717a" strokeWidth="2" />
-              <circle cx="0" cy="-3" r="3" fill="#ef4444" className="animate-ping" />
-              <circle cx="0" cy="-3" r="2.5" fill="#f87171" />
-            </g>
+              {/* Glowing Uplift Hollow Core (Where Floating Island Lifted Off) */}
+              <ellipse cx="600" cy="330" rx="360" ry="80" fill="url(#upliftCoreGlow)" />
+              <ellipse
+                cx="600"
+                cy="330"
+                rx="300"
+                ry="55"
+                fill="none"
+                stroke="#10b981"
+                strokeWidth="1.2"
+                strokeDasharray="5 7"
+                opacity="0.55"
+              />
+              <ellipse
+                cx="600"
+                cy="330"
+                rx="200"
+                ry="36"
+                fill="none"
+                stroke="#34d399"
+                strokeWidth="1"
+                strokeDasharray="3 5"
+                opacity="0.45"
+              />
+              <ellipse
+                cx="600"
+                cy="330"
+                rx="100"
+                ry="18"
+                fill="none"
+                stroke="#6ee7b7"
+                strokeWidth="1"
+                opacity="0.3"
+              />
 
-            <g transform="translate(960, 245)">
-              <line x1="0" y1="0" x2="-8" y2="30" stroke="#71717a" strokeWidth="2" />
-              <line x1="0" y1="0" x2="8" y2="30" stroke="#71717a" strokeWidth="2" />
-              <line x1="0" y1="0" x2="0" y2="30" stroke="#71717a" strokeWidth="2" />
-              <circle cx="0" cy="-3" r="3" fill="#38bdf8" className="animate-ping" />
-              <circle cx="0" cy="-3" r="2.5" fill="#38bdf8" />
-            </g>
+              {/* Central Bedrock Core Marker */}
+              <circle cx="600" cy="330" r="4" fill="#34d399" className="animate-pulse" />
+              <text x="600" y="355" textAnchor="middle" fill="#6ee7b7" fontFamily="monospace" fontSize="8.5" letterSpacing="0.15em">
+                GROUND DATUM 00:00M · UPLIFT ROOT AXIS
+              </text>
 
-            {/* Uplink Energy Particles rising to orbit */}
-            <circle cx="560" cy="270" r="1.5" fill="#6ee7b7" opacity="0.8" />
-            <circle cx="640" cy="240" r="2" fill="#6ee7b7" opacity="0.7" />
-            <circle cx="610" cy="190" r="1.5" fill="#6ee7b7" opacity="0.5" />
-            <circle cx="580" cy="150" r="1" fill="#6ee7b7" opacity="0.4" />
-          </svg>
+              {/* Geological Quarry Bench Terraces & Fault Lines */}
+              <path
+                d="M 120 280 C 240 310, 380 340, 520 350"
+                stroke="#57534e"
+                strokeWidth="2"
+                fill="none"
+                strokeDasharray="4 4"
+              />
+              <path
+                d="M 680 350 C 820 340, 960 310, 1080 280"
+                stroke="#57534e"
+                strokeWidth="2"
+                fill="none"
+                strokeDasharray="4 4"
+              />
+
+              {/* Surveyor Tripods & Telemetry Warning Beacons on Crater Rim */}
+              <g transform="translate(240, 245)">
+                <line x1="0" y1="0" x2="-8" y2="30" stroke="#a1a1aa" strokeWidth="2" />
+                <line x1="0" y1="0" x2="8" y2="30" stroke="#a1a1aa" strokeWidth="2" />
+                <line x1="0" y1="0" x2="0" y2="30" stroke="#a1a1aa" strokeWidth="2" />
+                <circle cx="0" cy="-3" r="3" fill="#ef4444" className="animate-ping" />
+                <circle cx="0" cy="-3" r="2.5" fill="#f87171" />
+                <text x="0" y="-10" textAnchor="middle" fill="#f87171" fontFamily="monospace" fontSize="7.5">
+                  BEACON α · 21°N
+                </text>
+              </g>
+
+              <g transform="translate(960, 245)">
+                <line x1="0" y1="0" x2="-8" y2="30" stroke="#a1a1aa" strokeWidth="2" />
+                <line x1="0" y1="0" x2="8" y2="30" stroke="#a1a1aa" strokeWidth="2" />
+                <line x1="0" y1="0" x2="0" y2="30" stroke="#a1a1aa" strokeWidth="2" />
+                <circle cx="0" cy="-3" r="3" fill="#38bdf8" className="animate-ping" />
+                <circle cx="0" cy="-3" r="2.5" fill="#38bdf8" />
+                <text x="0" y="-10" textAnchor="middle" fill="#38bdf8" fontFamily="monospace" fontSize="7.5">
+                  BEACON β · 72°E
+                </text>
+              </g>
+
+              {/* Uplink Energy Particles ascending from Bedrock to Orbit */}
+              <circle cx="560" cy="270" r="1.5" fill="#6ee7b7" opacity="0.85" />
+              <circle cx="640" cy="240" r="2" fill="#6ee7b7" opacity="0.75" />
+              <circle cx="610" cy="190" r="1.5" fill="#6ee7b7" opacity="0.6" />
+              <circle cx="580" cy="150" r="1.2" fill="#6ee7b7" opacity="0.5" />
+              <circle cx="625" cy="115" r="1.5" fill="#6ee7b7" opacity="0.4" />
+              <circle cx="595" cy="80" r="1.2" fill="#6ee7b7" opacity="0.35" />
+            </svg>
+          </div>
+
+          {/* Integrated Bedrock Horizon Telemetry Bar */}
+          <div className="px-6 py-3 border-t border-white/10 bg-black/60 backdrop-blur-md flex flex-wrap items-center justify-between gap-3 font-mono text-[10px] text-white/50">
+            <div className="flex items-center gap-3">
+              <span className="text-emerald-400 font-semibold">DATUM: 00:00 N, 00:00 E</span>
+              <span>·</span>
+              <span>GEOLOGICAL BEDROCK EXCAVATION HORIZON</span>
+            </div>
+            <div className="flex items-center gap-3">
+              <span>CRATER DEPTH: -42M BELOW PLAIN</span>
+              <span>·</span>
+              <span className="text-white/70">ORBITAL UPLINK: ACTIVE</span>
+            </div>
+          </div>
         </div>
       </div>
 
