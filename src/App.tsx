@@ -3,14 +3,11 @@
 import { useEffect, useState } from "react";
 import { RouterProvider, useRoute } from "@/router/Router";
 import { CodedSky, type SkyVariant } from "@/sky/CodedSky";
-import { SolarChronometer, type HudStyle } from "@/sky/hud/SolarChronometer";
 import { Header } from "@/components/Header";
 import { TypeGardenLoader } from "@/components/TypeGardenLoader";
 import { CelestialNight } from "@/components/CelestialNight";
 import { ButterflyCursor } from "@/components/ButterflyCursor";
-import { DevMenu } from "@/components/DevMenu";
 import { ThermalSkyClock } from "@/sky/ThermalSkyClock";
-import { type MusicWidgetStyle } from "@/components/music/MusicWidgetHost";
 
 // Page & Section Components
 import { Hero } from "@/sections/Hero";
@@ -26,59 +23,33 @@ import { LabPage } from "@/pages/LabPage";
 import { setSkyTime } from "@/lib/useTimeOfDay";
 
 const VARIANT_KEY = "sky-variant";
-const VARIANTS: SkyVariant[] = ["volumetric", "dither", "vector"];
-
-function initialVariant(): SkyVariant {
-  if (typeof window === "undefined") return "volumetric";
-  const url = new URLSearchParams(window.location.search).get("variant");
-  if (url === "vector" || url === "dither" || url === "volumetric") return url;
-  const stored = window.localStorage.getItem(VARIANT_KEY);
-  if (stored === "vector" || stored === "dither" || stored === "volumetric") return stored;
-  return "volumetric";
-}
 
 function PortfolioContent() {
   const { path } = useRoute();
-  const [variant, setVariant] = useState<SkyVariant>(initialVariant);
-  const [hudOpen, setHudOpen] = useState(true);
-  const [hudStyle, setHudStyle] = useState<HudStyle>("pinui");
-  const [musicStyle, setMusicStyle] = useState<MusicWidgetStyle>("pinui");
+  const [variant] = useState<SkyVariant>("volumetric");
   const [hasLoadedGarden, setHasLoadedGarden] = useState(false);
   const [isLoaderDocked, setIsLoaderDocked] = useState(false);
   const [fullscreenGarden, setFullscreenGarden] = useState(false);
   const [clockSize, setClockSize] = useState<"thumbnail" | "full">("thumbnail");
 
-  // Dev Menu feature flags
-  const [showLayerA, setShowLayerA] = useState(true);
-  const [showLayerB, setShowLayerB] = useState(true);
-  const [wireframe, setWireframe] = useState(false);
-  const [forceAurora, setForceAurora] = useState(false);
-  const [forceNight, setForceNight] = useState(false);
-  const [butterflyEnabled, setButterflyEnabled] = useState(true);
+  // Visual layer flags
+  const showLayerA = true;
+  const showLayerB = true;
+  const wireframe = false;
+  const forceAurora = false;
+  const forceNight = false;
+  const butterflyEnabled = true;
 
   useEffect(() => {
-    window.localStorage.setItem(VARIANT_KEY, variant);
+    window.localStorage.setItem(VARIANT_KEY, "volumetric");
     const params = new URLSearchParams(window.location.search);
-    params.set("variant", variant);
+    params.set("variant", "volumetric");
     const t = params.get("t");
     window.history.replaceState(null, "", `${window.location.pathname}?${params}${window.location.hash}`);
     if (t) {
       const [h, m] = t.split(":").map(Number);
       if (Number.isFinite(h)) setSkyTime(h + (m || 0) / 60, "manual");
     }
-  }, [variant]);
-
-  // Keyboard shortcuts
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      if (e.target instanceof HTMLElement && /input|textarea/i.test(e.target.tagName)) return;
-      if (e.key === "1") setVariant("volumetric");
-      if (e.key === "2") setVariant("dither");
-      if (e.key === "3") setVariant("vector");
-      if (e.key === "[") setHudOpen((v) => !v);
-    };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
   }, []);
 
   return (
@@ -94,13 +65,11 @@ function PortfolioContent() {
       {/* ── Garden Butterfly Cursor Trail ───────────────────────────── */}
       <ButterflyCursor enabled={butterflyEnabled} />
 
-      {/* ── Fixed Top-Right Corner Clock (Outside Central Notch) ─────── */}
+      {/* ── Fixed Top-Right Corner Clock (Refined Luxury Pill) ─────── */}
       <div
         className="fixed top-3.5 right-4 sm:right-6 z-50 pointer-events-auto cursor-pointer"
         onClick={() => {
-          if (clockSize === "thumbnail") {
-            setClockSize("full");
-          }
+          setClockSize((prev) => (prev === "thumbnail" ? "full" : "thumbnail"));
         }}
       >
         <ThermalSkyClock
@@ -151,7 +120,7 @@ function PortfolioContent() {
 
         {path === "/about" && (
           <>
-            <AboutPage externalMusicStyle={musicStyle} />
+            <AboutPage externalMusicStyle="pinui" />
             <ExcavationCraterFooter />
           </>
         )}
@@ -193,69 +162,6 @@ function PortfolioContent() {
           </>
         )}
       </main>
-
-      {/* ── Solar Chronometer Instrument HUD (Bottom-Right) ──────────── */}
-      <div
-        className="hud fixed bottom-6 right-6 z-40 p-3 rounded-2xl bg-black/60 backdrop-blur-2xl border border-white/15 shadow-2xl transition-all"
-        data-open={hudOpen}
-      >
-        <SolarChronometer
-          externalStyle={hudStyle}
-          onStyleChange={(s) => setHudStyle(s)}
-        />
-
-        <div className="hud-row flex items-center justify-between mt-2 pt-2 border-t border-white/10 font-mono text-[10px]">
-          <div className="variant-dots flex items-center gap-1.5" role="group" aria-label="Sky texture">
-            {VARIANTS.map((v) => (
-              <button
-                key={v}
-                type="button"
-                className={`px-2 py-0.5 rounded text-[8.5px] uppercase transition-all ${
-                  variant === v
-                    ? "bg-white text-black font-bold"
-                    : "bg-white/10 text-white/50 hover:text-white"
-                }`}
-                onClick={() => setVariant(v)}
-                title={`Switch sky shader: ${v}`}
-              >
-                {v[0].toUpperCase()}
-              </button>
-            ))}
-          </div>
-
-          <button
-            type="button"
-            className="hud-hide text-white/50 hover:text-white px-1.5 py-0.5 rounded"
-            onClick={() => setHudOpen((v) => !v)}
-            aria-expanded={hudOpen}
-            title="Toggle instrument ([)"
-          >
-            {hudOpen ? "—" : "◔"}
-          </button>
-        </div>
-      </div>
-
-      {/* ── Developer Feature Test Control Center (Bottom-Left) ──────── */}
-      <DevMenu
-        currentVariant={variant}
-        onVariantChange={setVariant}
-        currentHudStyle={hudStyle}
-        onHudStyleChange={setHudStyle}
-        currentMusicStyle={musicStyle}
-        onMusicStyleChange={setMusicStyle}
-        showLayerA={showLayerA}
-        onToggleLayerA={() => setShowLayerA(!showLayerA)}
-        showLayerB={showLayerB}
-        onToggleLayerB={() => setShowLayerB(!showLayerB)}
-        wireframe={wireframe}
-        onToggleWireframe={() => setWireframe(!wireframe)}
-        forceAurora={forceAurora}
-        onToggleAurora={() => setForceAurora(!forceAurora)}
-        forceNight={forceNight}
-        onToggleNight={() => setForceNight(!forceNight)}
-        butterflyEnabled={butterflyEnabled}
-        onToggleButterfly={() => setButterflyEnabled(!butterflyEnabled)}
-      />
     </>
   );
 }

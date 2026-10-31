@@ -1,9 +1,11 @@
+"use client";
+
 import { useEffect, useState } from "react";
 
 export function ExcavationCraterFooter() {
   const [copied, setCopied] = useState(false);
   const [handleCopied, setHandleCopied] = useState(false);
-  const [activeSocial, setActiveSocial] = useState<string | null>(null);
+  const [_activeSocial, setActiveSocial] = useState<string | null>(null);
   const [ignitionActive, setIgnitionActive] = useState(false);
   const [showCallModal, setShowCallModal] = useState(false);
   const [times, setTimes] = useState({ surat: "", sf: "", utc: "" });
@@ -52,7 +54,7 @@ export function ExcavationCraterFooter() {
         await navigator.clipboard.writeText("rudraksh.singhh@outlook.com");
       }
     } catch {
-      // Graceful fallback for restricted environments
+      // Fallback
     }
     setCopied(true);
     setTimeout(() => setCopied(false), 2500);
@@ -64,7 +66,7 @@ export function ExcavationCraterFooter() {
         await navigator.clipboard.writeText("@rudrakshsinghh");
       }
     } catch {
-      // Graceful fallback for restricted environments
+      // Fallback
     }
     setHandleCopied(true);
     setTimeout(() => setHandleCopied(false), 2500);
@@ -84,377 +86,184 @@ export function ExcavationCraterFooter() {
   };
 
   return (
-    <footer id="crater" className="excavation-crater-footer relative w-full overflow-hidden bg-gradient-to-b from-[#06070a] via-[#0b0c10] to-[#040507] pt-20 pb-16 text-white border-t border-white/10">
+    <footer id="crater" className="excavation-crater-footer relative w-full overflow-hidden bg-gradient-to-b from-[#080a0f] via-[#050608] to-[#020304] pt-20 pb-16 text-white border-t border-white/10">
       {/* ============================================================== */}
-      {/* EXCAVATION CRATER RIM PLACEHOLDER SVG                          */}
-      {/* The massive geological hollow in bedrock where island lifted   */}
+      {/* EXCAVATION CRATER RIM // BEDROCK HORIZON (Altitude 04 Ground)  */}
+      {/* Elegant atmospheric bedrock horizon divider                     */}
       {/* ============================================================== */}
-      {/* ============================================================== */}
-      {/* EXPANSIVE BEDROCK HORIZON & CRATER UPLIFT PANORAMA             */}
-      {/* The massive geological hollow in bedrock where island lifted   */}
-      {/* ============================================================== */}
-      <div className="relative w-full max-w-7xl mx-auto px-4 sm:px-8 mb-16">
-        {/* Telemetry Header */}
-        <div className="flex flex-wrap items-center justify-between gap-3 mb-6 pb-3 border-b border-white/10">
-          <div className="flex items-center gap-2.5 font-mono text-[10.5px] uppercase tracking-[0.2em] text-emerald-300">
-            <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse shadow-[0_0_8px_rgba(52,211,153,0.8)]" />
-            <span>ALTITUDE 04 // THE EXCAVATION CRATER (BEDROCK ZERO)</span>
-          </div>
-          <div className="flex flex-wrap items-center gap-3 font-mono text-[10px] text-white/50">
-            <span>SURAT 21°10&apos;N 72°49&apos;E</span>
-            <span>·</span>
-            <span className="text-emerald-400 font-semibold">GROUND DATUM 00:00M BEDROCK HORIZON</span>
-          </div>
-        </div>
-
-        {/* Expansive Bedrock Horizon Panorama */}
-        <div className="relative w-full overflow-hidden rounded-3xl border border-white/15 bg-gradient-to-b from-[#0e1017]/90 via-[#07080c]/95 to-[#020204] shadow-[0_24px_80px_rgba(0,0,0,0.8),inset_0_1px_1px_rgba(255,255,255,0.12)]">
-          {/* Ambient horizon backdrop lighting */}
-          <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_50%_at_50%_100%,rgba(16,185,129,0.12),transparent_70%)] pointer-events-none" />
-          <div className="absolute inset-x-0 top-0 h-24 bg-gradient-to-b from-white/[0.04] to-transparent pointer-events-none" />
-
-          {/* Expansive Panoramic Geological Crater SVG */}
-          <div className="relative w-full px-2 sm:px-6 pt-6 pb-2">
-            <svg
-              viewBox="0 0 1200 420"
-              className="crater-rim w-full h-auto max-h-[420px] overflow-visible block"
-              aria-label="Geological Bedrock Excavation Crater Horizon"
-            >
-              <defs>
-                <linearGradient id="craterRock" x1="0%" y1="0%" x2="0%" y2="100%">
-                  <stop offset="0%" stopColor="#35332d" />
-                  <stop offset="40%" stopColor="#22201c" />
-                  <stop offset="85%" stopColor="#121215" />
-                  <stop offset="100%" stopColor="#050608" />
-                </linearGradient>
-                <linearGradient id="hollowGlow" x1="50%" y1="0%" x2="50%" y2="100%">
-                  <stop offset="0%" stopColor="#059669" stopOpacity="0.25" />
-                  <stop offset="100%" stopColor="#059669" stopOpacity="0" />
-                </linearGradient>
-                <radialGradient id="upliftCoreGlow" cx="50%" cy="50%" r="50%">
-                  <stop offset="0%" stopColor="#10b981" stopOpacity="0.32" />
-                  <stop offset="45%" stopColor="#059669" stopOpacity="0.12" />
-                  <stop offset="80%" stopColor="#047857" stopOpacity="0.04" />
-                  <stop offset="100%" stopColor="#047857" stopOpacity="0" />
-                </radialGradient>
-              </defs>
-
-              {/* EXCAVATION CRATER RIM // BEDROCK ZERO HORIZON */}
-              {/* Distant Stratigraphic Quarry Rim */}
-              <path
-                d="M 0 110
-                   C 180 80, 360 135, 600 125
-                   C 840 115, 1020 75, 1200 100
-                   L 1200 420 L 0 420 Z"
-                fill="#0f1117"
-                opacity="0.9"
-              />
-
-              {/* Midground Geological Terraces & Quarry Fault Benches */}
-              <path
-                d="M -20 160
-                   C 160 165, 320 205, 480 220
-                   C 640 235, 800 230, 960 195
-                   C 1080 170, 1160 155, 1220 150
-                   L 1220 420 L -20 420 Z"
-                fill="#181716"
-                stroke="#292622"
-                strokeWidth="1.2"
-              />
-
-              {/* Deep Excavation Pit / Crater Rim Silhouette (crater-rim) */}
-              <path
-                d="M -40 220
-                   C 140 225, 260 270, 360 300
-                   C 480 330, 720 330, 840 300
-                   C 940 270, 1060 225, 1240 220
-                   L 1240 420 L -40 420 Z"
-                fill="url(#craterRock)"
-                stroke="#4a443a"
-                strokeWidth="1.5"
-                className="crater-rim"
-              />
-
-              {/* Glowing Uplift Hollow Core (Where Floating Island Lifted Off) */}
-              <ellipse cx="600" cy="330" rx="360" ry="80" fill="url(#upliftCoreGlow)" />
-              <ellipse
-                cx="600"
-                cy="330"
-                rx="300"
-                ry="55"
-                fill="none"
-                stroke="#10b981"
-                strokeWidth="1.2"
-                strokeDasharray="5 7"
-                opacity="0.55"
-              />
-              <ellipse
-                cx="600"
-                cy="330"
-                rx="200"
-                ry="36"
-                fill="none"
-                stroke="#34d399"
-                strokeWidth="1"
-                strokeDasharray="3 5"
-                opacity="0.45"
-              />
-              <ellipse
-                cx="600"
-                cy="330"
-                rx="100"
-                ry="18"
-                fill="none"
-                stroke="#6ee7b7"
-                strokeWidth="1"
-                opacity="0.3"
-              />
-
-              {/* Central Bedrock Core Marker */}
-              <circle cx="600" cy="330" r="4" fill="#34d399" className="animate-pulse" />
-              <text x="600" y="355" textAnchor="middle" fill="#6ee7b7" fontFamily="monospace" fontSize="8.5" letterSpacing="0.15em">
-                GROUND DATUM 00:00M · UPLIFT ROOT AXIS
-              </text>
-
-              {/* Geological Quarry Bench Terraces & Fault Lines */}
-              <path
-                d="M 120 280 C 240 310, 380 340, 520 350"
-                stroke="#57534e"
-                strokeWidth="2"
-                fill="none"
-                strokeDasharray="4 4"
-              />
-              <path
-                d="M 680 350 C 820 340, 960 310, 1080 280"
-                stroke="#57534e"
-                strokeWidth="2"
-                fill="none"
-                strokeDasharray="4 4"
-              />
-
-              {/* Surveyor Tripods & Telemetry Warning Beacons on Crater Rim */}
-              <g transform="translate(240, 245)">
-                <line x1="0" y1="0" x2="-8" y2="30" stroke="#a1a1aa" strokeWidth="2" />
-                <line x1="0" y1="0" x2="8" y2="30" stroke="#a1a1aa" strokeWidth="2" />
-                <line x1="0" y1="0" x2="0" y2="30" stroke="#a1a1aa" strokeWidth="2" />
-                <circle cx="0" cy="-3" r="3" fill="#ef4444" className="animate-ping" />
-                <circle cx="0" cy="-3" r="2.5" fill="#f87171" />
-                <text x="0" y="-10" textAnchor="middle" fill="#f87171" fontFamily="monospace" fontSize="7.5">
-                  BEACON α · 21°N
-                </text>
-              </g>
-
-              <g transform="translate(960, 245)">
-                <line x1="0" y1="0" x2="-8" y2="30" stroke="#a1a1aa" strokeWidth="2" />
-                <line x1="0" y1="0" x2="8" y2="30" stroke="#a1a1aa" strokeWidth="2" />
-                <line x1="0" y1="0" x2="0" y2="30" stroke="#a1a1aa" strokeWidth="2" />
-                <circle cx="0" cy="-3" r="3" fill="#38bdf8" className="animate-ping" />
-                <circle cx="0" cy="-3" r="2.5" fill="#38bdf8" />
-                <text x="0" y="-10" textAnchor="middle" fill="#38bdf8" fontFamily="monospace" fontSize="7.5">
-                  BEACON β · 72°E
-                </text>
-              </g>
-
-              {/* Uplink Energy Particles ascending from Bedrock to Orbit */}
-              <circle cx="560" cy="270" r="1.5" fill="#6ee7b7" opacity="0.85" />
-              <circle cx="640" cy="240" r="2" fill="#6ee7b7" opacity="0.75" />
-              <circle cx="610" cy="190" r="1.5" fill="#6ee7b7" opacity="0.6" />
-              <circle cx="580" cy="150" r="1.2" fill="#6ee7b7" opacity="0.5" />
-              <circle cx="625" cy="115" r="1.5" fill="#6ee7b7" opacity="0.4" />
-              <circle cx="595" cy="80" r="1.2" fill="#6ee7b7" opacity="0.35" />
-            </svg>
+      <div className="relative w-full max-w-7xl mx-auto px-4 sm:px-8 mb-12">
+        <div className="relative w-full overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-b from-white/[0.03] to-transparent p-6 text-center">
+          <div className="flex items-center justify-center gap-2 font-mono text-[10px] uppercase tracking-widest text-emerald-400/80 mb-2">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+            <span>EXCAVATION CRATER RIM · GROUND DATUM 00:00 N, 00:00 E · BEDROCK HORIZON</span>
           </div>
 
-          {/* Integrated Bedrock Horizon Telemetry Bar */}
-          <div className="px-6 py-3 border-t border-white/10 bg-black/60 backdrop-blur-md flex flex-wrap items-center justify-between gap-3 font-mono text-[10px] text-white/50">
-            <div className="flex items-center gap-3">
-              <span className="text-emerald-400 font-semibold">DATUM: 00:00 N, 00:00 E</span>
-              <span>·</span>
-              <span>GEOLOGICAL BEDROCK EXCAVATION HORIZON</span>
-            </div>
-            <div className="flex items-center gap-3">
-              <span>CRATER DEPTH: -42M BELOW PLAIN</span>
-              <span>·</span>
-              <span className="text-white/70">ORBITAL UPLINK: ACTIVE</span>
-            </div>
-          </div>
+          <svg
+            viewBox="0 0 1200 60"
+            className="crater-rim w-full h-12 overflow-visible mx-auto opacity-75"
+            aria-label="Geological Bedrock Excavation Crater Horizon"
+          >
+            <defs>
+              <linearGradient id="craterRock" x1="0%" y1="0%" x2="100%" y2="0%">
+                <stop offset="0%" stopColor="#1e293b" stopOpacity="0" />
+                <stop offset="20%" stopColor="#334155" stopOpacity="0.8" />
+                <stop offset="50%" stopColor="#475569" stopOpacity="0.9" />
+                <stop offset="80%" stopColor="#334155" stopOpacity="0.8" />
+                <stop offset="100%" stopColor="#1e293b" stopOpacity="0" />
+              </linearGradient>
+            </defs>
+            <path
+              d="M 0 50 Q 300 20 600 35 Q 900 20 1200 50"
+              stroke="url(#craterRock)"
+              strokeWidth="2"
+              fill="none"
+              className="crater-rim"
+            />
+          </svg>
         </div>
       </div>
 
       {/* ============================================================== */}
-      {/* CLEAN FOOTER ELEMENTS                                          */}
+      {/* REFINED EDITORIAL FOOTER CONTENT                               */}
       {/* ============================================================== */}
       <div className="max-w-7xl mx-auto px-4 sm:px-8 grid grid-cols-1 md:grid-cols-12 gap-8 items-start">
-        {/* 1. Surveyor's Plaque (Cast Metal Bedrock Plaque) */}
-        <div className="md:col-span-5 p-6 rounded-xl border border-white/15 bg-black/40 backdrop-blur-md">
-          <div className="font-mono text-[9px] uppercase tracking-[0.2em] text-white/40 mb-2">
-            SURVEYOR&apos;S BENCHMARK // CAST METAL INSCRIPTION
+        {/* 1. Designer Inscription Plaque */}
+        <div className="md:col-span-5 p-7 rounded-2xl border border-white/15 bg-black/40 backdrop-blur-xl shadow-xl">
+          <div className="font-mono text-[9.5px] uppercase tracking-[0.2em] text-emerald-400/90 mb-3">
+            SURVEYOR&apos;S BENCHMARK // BEDROCK FOUNDATION
           </div>
-          <h3 className="font-serif text-[26px] font-normal tracking-tight text-white/95 mb-3 leading-snug">
+          <h3 className="font-serif text-[28px] font-normal tracking-tight text-white mb-3 leading-snug">
             &ldquo;From this ground, we build systems.&rdquo;
           </h3>
-          <p className="font-sans text-[13.5px] font-light text-white/60 leading-relaxed mb-4">
-            Every interface starts with solid bedrock: unyielding clarity on what decisions humans must make,
-            and where autonomous systems must step back and request authority.
+          <p className="font-sans text-[14px] font-light text-white/70 leading-relaxed mb-5">
+            Every enduring interface starts with solid bedrock: unyielding clarity on what decisions humans must make,
+            and where autonomous systems must step back.
           </p>
-          <div className="flex items-center gap-2 font-mono text-[10px] text-white/40">
+          <div className="flex items-center gap-2 font-mono text-[10.5px] text-white/40">
             <span>RUDRAKSH SINGH</span>
             <span>·</span>
             <span>2024 — {new Date().getFullYear()}</span>
           </div>
         </div>
 
-        {/* 2. Book Call Button (Ignition Switch Style) & 3. Communication HUD */}
+        {/* 2. Direct Engagement & Communication Channels */}
         <div className="md:col-span-7 flex flex-col gap-6">
-          {/* Ignition Switch Book Call Button */}
-          <div className="p-6 rounded-xl border border-white/15 bg-neutral-900/60 backdrop-blur-md flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          {/* Consultation / Call Card */}
+          <div className="p-7 rounded-2xl border border-white/15 bg-neutral-900/50 backdrop-blur-xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-5 shadow-xl">
             <div>
-              <div className="font-mono text-[9.5px] uppercase tracking-wider text-amber-300 mb-1 flex items-center gap-2">
+              <div className="font-mono text-[10px] uppercase tracking-wider text-amber-300 mb-1 flex items-center gap-2">
                 <span className="h-2 w-2 rounded-full bg-amber-400 animate-pulse" />
                 <span>CONSULTATION IGNITION DOCK</span>
               </div>
-              <div className="font-sans text-[15px] font-semibold text-white">
+              <div className="font-sans text-[17px] font-semibold text-white">
                 Initiate Architecture Briefing
               </div>
-              <div className="font-sans text-[12px] text-white/50">
-                Direct discussion on product design, AI command interfaces, or design engineering.
+              <div className="font-sans text-[13px] text-white/60 mt-0.5">
+                Direct discussion on product design, AI command interfaces, and design engineering.
               </div>
             </div>
 
-            {/* Physical Aviation Ignition Switch Button */}
             <button
               type="button"
               onClick={handleIgnitionToggle}
-              className={`group relative px-6 py-3 rounded-xl border font-mono text-[12px] uppercase tracking-wider font-bold transition-all shadow-lg ${
+              className={`group relative px-6 py-3 rounded-xl border font-mono text-[12px] uppercase tracking-wider font-semibold transition-all shadow-md ${
                 ignitionActive
-                  ? "bg-amber-400 text-black border-amber-300 shadow-amber-400/40"
-                  : "bg-neutral-800 border-white/20 text-white hover:border-amber-400/60 hover:bg-neutral-750"
+                  ? "bg-amber-400 text-black border-amber-300 shadow-amber-400/30"
+                  : "bg-white/10 border-white/20 text-white hover:border-amber-400/60 hover:bg-white/15"
               }`}
             >
               <span className="flex items-center gap-2">
-                <span className="text-amber-400 group-hover:scale-125 transition-transform">⚡</span>
-                <span>FLIP IGNITION →</span>
+                <span>Start a Conversation →</span>
               </span>
             </button>
           </div>
 
-          {/* Communication HUD: Unified @rudrakshsinghh Orbit Hub & Multi-Timezone Clocks */}
+          {/* Social Channels & Global Timezone Clocks */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {/* Unified @rudrakshsinghh Social Orbit Transmitter */}
-            <div className="p-5 rounded-xl border border-white/10 bg-black/50 backdrop-blur-md flex flex-col justify-between relative overflow-hidden">
+            {/* Social Channels */}
+            <div className="p-5 rounded-2xl border border-white/10 bg-black/40 backdrop-blur-xl flex flex-col justify-between">
               <div className="flex items-center justify-between mb-3">
-                <div className="font-mono text-[9px] uppercase tracking-wider text-white/40 flex items-center gap-1.5">
+                <div className="font-mono text-[9.5px] uppercase tracking-wider text-white/50 flex items-center gap-1.5">
                   <span className="h-1.5 w-1.5 rounded-full bg-cyan-400" />
                   <span>COMMUNICATION TRANSMITTER</span>
                 </div>
-                <span className="font-mono text-[9px] text-white/40">FREQ // GLOBAL</span>
+                <span className="font-mono text-[9px] text-white/40">DIRECT ORBIT</span>
               </div>
 
-              {/* Central Unified Handle Dock with Surrounding Orbital Constellation */}
-              <div className="relative py-4 flex flex-col items-center justify-center">
-                {/* Orbital Guide Ring */}
-                <div className="absolute inset-x-2 inset-y-1 rounded-full border border-dashed border-white/10 pointer-events-none -z-0" />
-
-                {/* Central Luminous Handle Pill */}
+              {/* Unified Handle Dock */}
+              <div className="py-2 flex flex-col items-center justify-center">
                 <button
                   type="button"
                   onClick={handleCopyHandle}
-                  className="group relative z-10 px-4 py-2 rounded-full bg-neutral-900 border border-white/20 hover:border-cyan-400/80 shadow-[0_0_20px_rgba(6,182,212,0.15)] flex items-center gap-2 transition-all hover:scale-105"
-                  title="Click to copy unified handle"
+                  className="group px-4 py-2 rounded-full bg-white/5 hover:bg-white/10 border border-white/20 hover:border-cyan-400/80 shadow-sm flex items-center gap-2 transition-all hover:scale-105"
+                  title="Click to copy handle"
                 >
                   <span className="h-2 w-2 rounded-full bg-cyan-400 animate-pulse" />
                   <span className="font-mono text-[13px] font-bold text-white tracking-wide">
                     @rudrakshsinghh
                   </span>
-                  <span className="font-mono text-[10px] text-white/50 group-hover:text-cyan-300 transition-colors">
+                  <span className="font-mono text-[10px] text-white/50 group-hover:text-cyan-300">
                     {handleCopied ? "✓ COPIED" : "⧉"}
                   </span>
                 </button>
 
-                {/* Surrounding Arranged Social Media Satellites */}
-                <div className="relative z-10 flex items-center justify-center gap-2.5 sm:gap-3 mt-4">
-                  {/* X / Twitter */}
+                {/* Social Links */}
+                <div className="flex items-center justify-center gap-2.5 mt-4">
                   <a
                     href="https://x.com/rudrakshsinghh"
                     target="_blank"
                     rel="noreferrer"
                     onMouseEnter={() => setActiveSocial("x")}
                     onMouseLeave={() => setActiveSocial(null)}
-                    className="h-9 w-9 rounded-full bg-white/5 hover:bg-white/20 border border-white/15 hover:border-white text-white flex items-center justify-center transition-all hover:scale-110 shadow-md font-bold text-[12px]"
-                    title="X (Twitter) // @rudrakshsinghh"
+                    className="h-9 w-9 rounded-full bg-white/5 hover:bg-white/20 border border-white/15 hover:border-white text-white flex items-center justify-center transition-all hover:scale-110 font-bold text-[12px]"
+                    title="X (Twitter)"
                   >
                     𝕏
                   </a>
 
-                  {/* GitHub */}
                   <a
                     href="https://github.com/rudy0Z"
                     target="_blank"
                     rel="noreferrer"
                     onMouseEnter={() => setActiveSocial("github")}
                     onMouseLeave={() => setActiveSocial(null)}
-                    className="h-9 w-9 rounded-full bg-white/5 hover:bg-emerald-950/60 border border-white/15 hover:border-emerald-400 text-white flex items-center justify-center transition-all hover:scale-110 shadow-md font-mono text-[11px]"
-                    title="GitHub // rudy0Z"
+                    className="h-9 w-9 rounded-full bg-white/5 hover:bg-emerald-950/60 border border-white/15 hover:border-emerald-400 text-white flex items-center justify-center transition-all hover:scale-110 font-mono text-[11px]"
+                    title="GitHub"
                   >
                     gh
                   </a>
 
-                  {/* LinkedIn */}
                   <a
                     href="https://linkedin.com/in/rudraksh-singh"
                     target="_blank"
                     rel="noreferrer"
                     onMouseEnter={() => setActiveSocial("linkedin")}
                     onMouseLeave={() => setActiveSocial(null)}
-                    className="h-9 w-9 rounded-full bg-white/5 hover:bg-sky-950/60 border border-white/15 hover:border-sky-400 text-white flex items-center justify-center transition-all hover:scale-110 shadow-md font-bold text-[11px]"
-                    title="LinkedIn // in/rudraksh-singh"
+                    className="h-9 w-9 rounded-full bg-white/5 hover:bg-sky-950/60 border border-white/15 hover:border-sky-400 text-white flex items-center justify-center transition-all hover:scale-110 font-bold text-[11px]"
+                    title="LinkedIn"
                   >
                     in
                   </a>
 
-                  {/* Email */}
                   <a
                     href="mailto:rudraksh.singhh@outlook.com"
                     onMouseEnter={() => setActiveSocial("mail")}
                     onMouseLeave={() => setActiveSocial(null)}
-                    className="h-9 w-9 rounded-full bg-white/5 hover:bg-amber-950/60 border border-white/15 hover:border-amber-400 text-white flex items-center justify-center transition-all hover:scale-110 shadow-md text-[13px]"
-                    title="Direct Outlook Mail // rudraksh.singhh@outlook.com"
+                    className="h-9 w-9 rounded-full bg-white/5 hover:bg-amber-950/60 border border-white/15 hover:border-amber-400 text-white flex items-center justify-center transition-all hover:scale-110 text-[13px]"
+                    title="Direct Mail"
                   >
                     ✉
                   </a>
-
-                  {/* ReadCV */}
-                  <a
-                    href="https://rudrakshsingh.page"
-                    target="_blank"
-                    rel="noreferrer"
-                    onMouseEnter={() => setActiveSocial("web")}
-                    onMouseLeave={() => setActiveSocial(null)}
-                    className="h-9 w-9 rounded-full bg-white/5 hover:bg-purple-950/60 border border-white/15 hover:border-purple-400 text-white flex items-center justify-center transition-all hover:scale-110 shadow-md font-mono text-[10px]"
-                    title="Live Domain // rudrakshsingh.page"
-                  >
-                    cv
-                  </a>
-                </div>
-
-                {/* Telemetry Route Descriptor */}
-                <div className="mt-3 font-mono text-[10px] text-white/50 text-center h-4">
-                  {activeSocial === "x" && <span className="text-white">ROUTE ──► x.com/rudrakshsinghh</span>}
-                  {activeSocial === "github" && <span className="text-emerald-300">ROUTE ──► github.com/rudy0Z</span>}
-                  {activeSocial === "linkedin" && <span className="text-sky-300">ROUTE ──► linkedin.com/in/rudraksh-singh</span>}
-                  {activeSocial === "mail" && <span className="text-amber-300">ROUTE ──► rudraksh.singhh@outlook.com</span>}
-                  {activeSocial === "web" && <span className="text-purple-300">ROUTE ──► rudrakshsingh.page</span>}
-                  {!activeSocial && <span>TRANSPONDER LOCKED // 5 SATELLITE CHANNELS</span>}
                 </div>
               </div>
 
-              {/* Quick direct copy email strip */}
-              <div className="pt-2 border-t border-white/10 flex items-center justify-between font-mono text-[11px]">
+              {/* Direct Email Strip */}
+              <div className="pt-3 mt-2 border-t border-white/10 flex items-center justify-between font-mono text-[11px]">
                 <span className="text-white/40">Direct:</span>
                 <button
                   type="button"
                   onClick={handleCopyEmail}
-                  className="text-white hover:text-amber-300 transition-colors flex items-center gap-1.5"
+                  className="text-white/90 hover:text-amber-300 transition-colors flex items-center gap-1.5"
                 >
                   <span>rudraksh.singhh@outlook.com</span>
                   <span className="text-[10px] text-white/50">{copied ? "✓" : "⧉"}</span>
@@ -463,11 +272,11 @@ export function ExcavationCraterFooter() {
             </div>
 
             {/* Multi-Timezone Clocks */}
-            <div className="p-4 rounded-xl border border-white/10 bg-black/40 backdrop-blur-md">
-              <div className="font-mono text-[9px] uppercase tracking-wider text-white/40 mb-2">
+            <div className="p-5 rounded-2xl border border-white/10 bg-black/40 backdrop-blur-xl flex flex-col justify-between">
+              <div className="font-mono text-[9.5px] uppercase tracking-wider text-white/50 mb-3">
                 GLOBAL TELEMETRY CLOCKS
               </div>
-              <div className="space-y-1.5 font-mono text-[11px]">
+              <div className="space-y-2.5 font-mono text-[11.5px]">
                 <div className="flex justify-between items-center text-white/80">
                   <span className="text-white/40">SURAT (IST)</span>
                   <span className="font-semibold text-emerald-400">{times.surat || "12:00:00"}</span>
@@ -486,26 +295,26 @@ export function ExcavationCraterFooter() {
         </div>
       </div>
 
-      {/* 4. "Return to Orbit" Scroll-to-Top Button */}
+      {/* Return to Orbit Scroll-to-Top Button */}
       <div className="max-w-7xl mx-auto px-4 sm:px-8 mt-12 pt-8 border-t border-white/10 flex flex-col sm:flex-row items-center justify-between gap-4 font-mono text-[11px] text-white/40">
         <div>DESIGNED UNDER AN OKLCH RAYMARCHED SKY // LAT 21°N</div>
 
         <button
           type="button"
           onClick={handleReturnToOrbit}
-          className="flex items-center gap-2 px-4 py-2 rounded-full border border-white/15 bg-white/5 hover:bg-white/15 hover:text-white text-white/70 transition-all"
+          className="flex items-center gap-2 px-5 py-2.5 rounded-full border border-white/15 bg-white/5 hover:bg-white/15 hover:text-white text-white/80 transition-all shadow-sm"
         >
           <span>▲ RETURN TO ORBIT (00:00 N, 00:00 E)</span>
         </button>
       </div>
 
-      {/* Consultation Modal Placeholder */}
+      {/* Consultation Modal */}
       {showCallModal && (
         <div className="fixed inset-0 z-[120] flex items-center justify-center bg-black/80 backdrop-blur-xl p-4">
           <div className="w-full max-w-md rounded-2xl border border-white/20 bg-neutral-900 p-6 shadow-2xl text-left">
             <div className="flex items-center justify-between pb-4 border-b border-white/10 mb-4">
               <span className="font-mono text-[10px] uppercase tracking-wider text-amber-300">
-                IGNITION PROTOCOL // BRIEFING DISPATCH
+                INITIATE PROTOCOL // BRIEFING DISPATCH
               </span>
               <button
                 type="button"
@@ -542,3 +351,5 @@ export function ExcavationCraterFooter() {
     </footer>
   );
 }
+
+export default ExcavationCraterFooter;

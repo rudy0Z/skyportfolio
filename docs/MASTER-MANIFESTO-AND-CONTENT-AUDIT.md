@@ -230,7 +230,80 @@ git branch -M main
 git push -u origin main
 ```
 
-### Why this dual strategy is the best choice:
-1. **Zero Downtime / Zero Regressions:** Your existing Next.js portfolio remains 100% untouched and live.
-2. **Instant Preview & Testing:** The new `skyportfolio` can be deployed independently to Vercel/Netlify for live mobile and performance testing.
-3. **Clean Migration:** Once the new design is 100% complete and polished, you can seamlessly merge it into your primary portfolio or repoint your custom domain.
+---
+
+# Part IV: File-by-File Inventory, Intended Roles & Current Status
+
+Following the full codebase audit and refactoring pass (November 2026), here is the canonical manifest of all files saved in the project, their originally planned purpose, what failed or succeeded, and their current operational status:
+
+```
+┌───────────────────────────────────────────────────────────────────────────────────────────────────────┐
+│ SKY PORTFOLIO FILE & ASSET INVENTORY ROADMAP                                                          │
+├──────────────────────────────────────┬────────────────────────────────────────────────────────────────┤
+│ File / Directory Path                │ Planned Role, Status & Execution Plan                          │
+├──────────────────────────────────────┼────────────────────────────────────────────────────────────────┤
+│ src/sky/VolumetricSky.tsx            │ CANONICAL SKY ENGINE (Active)                                  │
+│                                      │ WebGL2 raymarched cumulus cloud shader with fractional         │
+│                                      │ Brownian motion (fBm). LOCKED as the exclusive sky engine.    │
+├──────────────────────────────────────┼────────────────────────────────────────────────────────────────┤
+│ src/sky/DitherSky.tsx                │ RETIRED (Deprecated)                                           │
+│ src/sky/VectorSky.tsx                │ Retro 1-bit Bayer dither and vector art shaders. Bypassed     │
+│                                      │ per user directive: "no dither style, only volumetric".       │
+├──────────────────────────────────────┼────────────────────────────────────────────────────────────────┤
+│ src/sky/hud/SolarChronometer.tsx     │ COCKPIT HUD REMOVED FROM VIEW                                  │
+│ src/sky/hud/PinUIThermalDial.tsx     │ Experimental debug instruments that caused the "cockpit"       │
+│ src/sky/hud/PuffyUIGlassArc.tsx      │ clutter at the bottom-right. Completely purged from standard  │
+│ src/sky/hud/SketcherUISpringSlider.tsx│ production viewport.                                           │
+├──────────────────────────────────────┼────────────────────────────────────────────────────────────────┤
+│ src/sky/ThermalSkyClock.tsx          │ TOP-RIGHT LUXURY LENS CLOCK (Active)                           │
+│                                      │ Precision horological gauge anchored at top-right corner.      │
+│                                      │ Stays unobtrusive in thumbnail mode; expands on click.         │
+├──────────────────────────────────────┼────────────────────────────────────────────────────────────────┤
+│ src/components/navigation/           │ INTERACTIVE NOTCH & TRACKING FLOWER (Active)                   │
+│ NavigationNotch.tsx                  │ Collapsible top pill housing navigation links, Lo-Fi audio     │
+│ TrackingFlower.tsx                   │ player, and the living cursor-tracking flower. Morphs into     │
+│ CompactAudioPlayer.tsx               │ compact 48px circle on scroll to prevent interference.         │
+├──────────────────────────────────────┼────────────────────────────────────────────────────────────────┤
+│ src/components/originkit/            │ MULTI-SHADER GPU PROTO (Isolated / Replaced)                   │
+│ Aetherglint.tsx, BluebellPass.tsx,   │ 5 heavy WebGL shaders intended for meadow grass & flowers.     │
+│ GlimmerVale.tsx, BloomingFlower.tsx, │ Running all 5 simultaneously with volumetric clouds caused     │
+│ MoonlitPetals.tsx                    │ GPU meltdown. Island base decoupled from synchronous contexts. │
+├──────────────────────────────────────┼────────────────────────────────────────────────────────────────┤
+│ src/components/depth-flow/           │ 2.5D DEPTH-MAP PARALLAX (Available Foundation)                 │
+│ DepthFlowCanvas.tsx,                 │ Lightweight fragment shaders using grayscale depth maps to     │
+│ MeadowDepthShader.tsx                │ extrude flat images into mouse-responsive 3D planes.           │
+├──────────────────────────────────────┼────────────────────────────────────────────────────────────────┤
+│ src/components/LumaKeyVideo.tsx      │ VIDEO PLAYBACK RETIRED (Replaced)                              │
+│                                      │ Real-time canvas luma-keying for white video backgrounds.      │
+│                                      │ Caused edge artifacts & performance drops; replaced by clean  │
+│                                      │ static image cutout (/portrait-cutout.png).                    │
+├──────────────────────────────────────┼────────────────────────────────────────────────────────────────┤
+│ public/portrait-cutout.png           │ CURRENT CHARACTER ARTWORK (Active)                             │
+│                                      │ Clean static illustration cutout of Rudraksh at vintage desk.  │
+│                                      │ Integrated with dynamic OKLCH lighting filters.                │
+├──────────────────────────────────────┼────────────────────────────────────────────────────────────────┤
+│ src/sections/HeroIsland.tsx          │ THE LIVING FLOATING ISLAND (Under Refinement)                  │
+│                                      │ Orchestrates Layer 0.5 (Keel + Thrusters) and Layer 1-4.       │
+│                                      │ Temporary SVG wedge placeholder slated for replacement by      │
+│                                      │ pre-rendered 3D/AI asset (Meshy / Google Flow).                │
+├──────────────────────────────────────┼────────────────────────────────────────────────────────────────┤
+│ src/sections/StackingProjects.tsx    │ ORBITAL PAVILIONS (Active & Polished)                          │
+│                                      │ 3 tactile stacking case study dossiers: Sentinel, LokAI,       │
+│                                      │ Feul.AI with clean obsidian glass styling.                     │
+├──────────────────────────────────────┼────────────────────────────────────────────────────────────────┤
+│ src/sections/ExcavationCraterFooter  │ EXCAVATION CRATER FOOTER (Active & Polished)                   │
+│ .tsx                                 │ Bedrock touchdown ground datum (-42m) with editorial           │
+│                                      │ typography, timezone clocks, and consultation briefing.        │
+└──────────────────────────────────────┴────────────────────────────────────────────────────────────────┘
+```
+
+---
+
+# Part V: Strategic Next Steps for the Island Asset
+
+1. **Retire Crude SVG Geometry:** The temporary triangular wedge in `HeroIsland.tsx` served only as an interactive layout anchor during refactoring. It will be replaced with an authentic 3D / illustrated floating meadow island plate.
+2. **Model Asset Pipeline:**
+   - Option A: Generate high-resolution front-angle and underside renders in **Meshy / Google Flow / Midjourney** with clean alpha channels.
+   - Option B: Single lightweight Three.js / Spline GLTF model with baked textures, eliminating shader collisions while providing true 360° rotational parallax.
+3. **Desk Lighting Integration:** The baked yellow lamp glow in the character illustration replaces clumsy procedural CSS glow blobs, preserving crisp line art and clean transparent margins.
+

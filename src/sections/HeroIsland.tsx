@@ -3,35 +3,31 @@
 import { useRef } from "react"
 import { getLight, type LightModel } from "@/lib/lighting"
 import { useSkyTime } from "@/lib/useTimeOfDay"
-import GlimmerVale from "@/components/originkit/GlimmerVale"
-import Aetherglint from "@/components/originkit/Aetherglint"
-import BluebellPass from "@/components/originkit/BluebellPass"
-import BloomingFlower from "@/components/originkit/BloomingFlower"
-import MoonlitPetals from "@/components/originkit/MoonlitPetals"
-import { oklch } from "@/lib/color"
+
 /* ==========================================================================
-   Interface: Preserve backward compatibility with Hero.tsx props
+   Interface: Backward compatibility with Hero.tsx props
    ========================================================================== */
 
 export interface HeroIslandProps {
   scrollProgress?: number // 0 (at rest) → 1 (fully scrolled down)
-  scrollVelocity?: number // pixels/ms, signed (+ = down, - = up)
+  scrollVelocity?: number // pixels/ms
   showLayerA?: boolean    // Toggle meadow/video layer
-  showLayerB?: boolean    // Toggle keel/thrusters layer
+  showLayerB?: boolean    // Toggle keel/rock strata layer
   wireframe?: boolean     // Debug mode
-  skyTime?: number        // Optional time override (defaults to useSkyTime())
+  skyTime?: number        // Optional time override
+  customIslandSrc?: string // Optional custom image asset override
   className?: string
 }
 
-/* ==========================================================================
-   Performance Constants
-   ========================================================================== */
+const MAX_PARALLAX_Y = 240
+const PARALLAX_SMOOTHING = 0.08
 
-const MAX_PARALLAX_Y = 280 // Maximum upward translation in pixels
-const PARALLAX_SMOOTHING = 0.08 // Lerp factor for smooth parallax
+function lerp(start: number, end: number, t: number): number {
+  return start * (1 - t) + end * t
+}
 
 /* ==========================================================================
-   Component: HeroIsland
+   Component: HeroIsland (The Living Floating Garden Island)
    ========================================================================== */
 
 export function HeroIsland({
@@ -41,33 +37,22 @@ export function HeroIsland({
   showLayerB = true,
   wireframe = false,
   skyTime = useSkyTime(),
+  customIslandSrc,
   className = "",
 }: HeroIslandProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   void scrollVelocity
   void wireframe
-  
-  // Parse OKLCH color strings for GlimmerVale integration
-  const parseOklchForGlimmer = (oklchStr: string): string => {
-    try {
-      const match = oklchStr.match(/oklch\(([\d.]+),\s*([\d.]+),\s*([\d.]+)\)/)
-      if (!match) return "#FFFFFF"
-      const [, l, c, h] = match
-      const ok = { l: parseFloat(l), c: parseFloat(c), h: parseFloat(h) }
-      return oklch(ok).toString()
-    } catch {
-      return "#FFFFFF"
-    }
-  }
 
-  // Compute dynamic lighting model from skyTime
   const light = getLight(skyTime)
 
   return (
     <div
       ref={containerRef}
-      className={`hero-island-root relative w-full h-full ${className}`}
+      className={`hero-island-root relative w-full ${className}`}
       style={{
+        minHeight: "850px",
+        height: "100vh",
         transform: "perspective(1200px) rotateX(var(--tilt-y, 0deg)) rotateY(var(--tilt-x, 0deg))",
         transformStyle: "preserve-3d",
         transition: "transform 140ms ease-out",
@@ -75,26 +60,31 @@ export function HeroIsland({
     >
       {/* ============================================================
           LAYER 0.5: SOKOVIA KEEL & PLASMA THRUSTERS (z-index: 0)
+          Natural floating island rock strata + soft atmospheric updraft
           ============================================================ */}
       {showLayerB && (
         <SokoviaKeelThrusters
           daylight={light.daylight}
-          plasmaGradient={parseOklchForGlimmer(light.palette.sunGlow)}
+          plasmaGradient={light.palette.sunGlow}
           scrollProgress={scrollProgress}
         />
       )}
 
       {/* ============================================================
-          LAYER 1: CINEMATIC MEADOW HORIZON (Aetherglint + BluebellPass + GlimmerVale)
-          z-index: 1 — Composited WebGL grass, carpet blooms & particle ridge
+          LAYER 1: CINEMATIC GARDEN MEADOW & FLOATING ISLAND KNOLL (z-index: 1)
+          Lush prairie grass, wildflowers, eroded cliff earth
           ============================================================ */}
       {showLayerA && (
-        <MeadowBackdrop scrollProgress={scrollProgress} light={light} />
+        <MeadowBackdrop
+          scrollProgress={scrollProgress}
+          light={light}
+          customIslandSrc={customIslandSrc}
+        />
       )}
 
       {/* ============================================================
-          LAYER 2: CHARACTER VIDEO SLOT ON HILL CREST
-          z-index: 2 — Obsidian glass frame with live relighting & portrait
+          LAYER 2: CHARACTER VIDEO SLOT ON HILL CREST (z-index: 2)
+          Designer at vintage desk nestled directly into the meadow
           ============================================================ */}
       <VideoCharacterSlot
         visible={showLayerA}
@@ -106,8 +96,8 @@ export function HeroIsland({
       />
 
       {/* ============================================================
-          LAYER 3: MOONLIT PETALS CANOPY OVERHEAD
-          z-index: 3 — Cherry blossom arch with drifting petals
+          LAYER 3: MOONLIT PETALS CANOPY OVERHEAD (z-index: 3)
+          Delicate blossom petals drifting across the atmosphere
           ============================================================ */}
       <MoonlitPetalsCanopy
         visible={showLayerA}
@@ -116,8 +106,8 @@ export function HeroIsland({
       />
 
       {/* ============================================================
-          LAYER 4: FOREGROUND BLOOMING FLOWER (WebGL Shader)
-          z-index: 4 — Originkit blooming flower integrated
+          LAYER 4: FOREGROUND BLOOMING FLOWER (z-index: 4)
+          Lush botanical meadow flora in bottom foreground
           ============================================================ */}
       <ForegroundBloomingFlower visible={showLayerA} />
     </div>
@@ -126,7 +116,7 @@ export function HeroIsland({
 
 /* ==========================================================================
    Sub-Component: Sokovia Keel & Plasma Thrusters
-   ============================================================ */
+   ========================================================================== */
 
 interface SokoviaKeelThrustersProps {
   daylight: number
@@ -134,15 +124,17 @@ interface SokoviaKeelThrustersProps {
   scrollProgress?: number
 }
 
-const SokoviaKeelThrusters = (props: SokoviaKeelThrustersProps) => {
-  const { plasmaGradient: _plasmaGradient, daylight, scrollProgress = 0 } = props
+function SokoviaKeelThrusters({
+  daylight,
+  plasmaGradient,
+  scrollProgress = 0,
+}: SokoviaKeelThrustersProps) {
   const nightEmissive = 1 - daylight
-  const bounceLightOpacity = nightEmissive * 0.35
-  const parallaxY = lerp(0, -scrollProgress * (MAX_PARALLAX_Y * 0.7), PARALLAX_SMOOTHING)
+  const parallaxY = lerp(0, -scrollProgress * (MAX_PARALLAX_Y * 1.15), PARALLAX_SMOOTHING)
 
   return (
     <div
-      className="keel-thrusters-layer absolute inset-0 pointer-events-none"
+      className="keel-thrusters-layer absolute inset-0 pointer-events-none flex items-center justify-center overflow-visible"
       style={{
         zIndex: 0,
         transform: `translateY(${parallaxY}px)`,
@@ -151,297 +143,265 @@ const SokoviaKeelThrusters = (props: SokoviaKeelThrustersProps) => {
     >
       <svg
         viewBox="0 0 1600 1000"
-        preserveAspectRatio="xMidYMax slice"
-        className="w-full h-auto absolute bottom-0 left-0"
-        style={{ height: "60vh" }}
+        className="w-full h-full overflow-visible"
+        fill="none"
+        xmlns="http://www.w3.org/2000/svg"
       >
         <defs>
-          {/* Rock strata multi-stop gradient */}
-          <linearGradient id="strata-gradient" x1="0%" y1="0%" x2="0%" y2="100%">
-            <stop offset="0%" stopColor={oklch({ l: 0.28, c: 0.04, h: 285 }).toString()} />
-            <stop offset="40%" stopColor={oklch({ l: 0.2, c: 0.035, h: 288 }).toString()} />
-            <stop offset="100%" stopColor={oklch({ l: 0.14, c: 0.03, h: 290 }).toString()} />
-          </linearGradient>
-
-          {/* Plasma thruster blur filter */}
           <filter id="thruster-blur" x="-50%" y="-50%" width="200%" height="200%">
-            <feGaussianBlur stdDeviation="12" result="blurredFlame" />
-            <feMerge>
-              <feMergeNode in="blurredFlame" />
-              <feMergeNode in="SourceGraphic" />
-            </feMerge>
+            <feGaussianBlur in="SourceGraphic" stdDeviation="36" />
           </filter>
-
-          {/* Plasma corona glow */}
-          <filter id="plasma-glow" x="-100%" y="-100%" width="300%" height="300%">
-            <feGaussianBlur stdDeviation="8" result="glow" />
-            <feMerge>
-              <feMergeNode in="glow" />
-              <feMergeNode in="SourceGraphic" />
-            </feMerge>
+          <filter id="plasma-glow" x="-30%" y="-30%" width="160%" height="160%">
+            <feGaussianBlur in="SourceGraphic" stdDeviation="18" />
           </filter>
-
-          {/* Arc reactor gradient */}
-          <radialGradient id="arc-reactor-gradient">
-            <stop offset="0%" stopColor="#ffffff" />
-            <stop offset="30%" stopColor="#38bdf8" />
-            <stop offset="70%" stopColor="#0284c7" opacity="0.5" />
-            <stop offset="100%" stopColor="#0284c7" opacity="0" />
+          <radialGradient id="celestial-updraft" cx="50%" cy="50%" r="50%">
+            <stop offset="0%" stopColor={plasmaGradient} stopOpacity={0.4 + nightEmissive * 0.4} />
+            <stop offset="60%" stopColor={plasmaGradient} stopOpacity={0.15} />
+            <stop offset="100%" stopColor={plasmaGradient} stopOpacity="0" />
           </radialGradient>
         </defs>
 
-        {/* Craggy bedrock mass */}
-        <path
-          d="M 0 520 Q 320 580, 480 680 T 800 880 T 1120 680 T 1600 520 L 1600 1000 L 0 1000 Z"
-          fill="url(#strata-gradient)"
-          stroke="rgba(255,255,255,0.06)"
-          strokeWidth="1"
-        />
-
-        {/* Tectonic shelf layers */}
-        <path
-          d="M 180 560 Q 420 620, 580 720 T 800 900 T 1020 720 T 1420 560 L 1420 580 Q 1020 640, 800 740 T 580 740 T 180 580 Z"
-          fill="rgba(45, 42, 38, 0.6)"
-          stroke="rgba(255,255,255,0.03)"
-          strokeWidth="0.5"
-        />
-
-        {/* Hanging ancient root tendrils */}
-        <g stroke={oklch({ l: 0.22, c: 0.025, h: 290 }).toString()} strokeWidth="2.5" strokeLinecap="round" fill="none" opacity="0.7">
-          <path d="M 380 680 Q 370 740, 350 790 T 360 840" />
-          <path d="M 420 700 Q 430 770, 410 830 T 425 880" />
-          <path d="M 1220 680 Q 1230 740, 1250 790 T 1240 840" />
-          <path d="M 1180 700 Q 1170 770, 1190 830 T 1175 880" />
-          <path d="M 720 860 Q 700 910, 715 960" />
-          <path d="M 880 860 Q 900 910, 885 960" />
-        </g>
-
-        {/* LEFT PLASMA THRUSTER */}
-        <g transform="translate(480, 720)">
-          {/* Steel gimbal mount */}
-          <polygon
-            points="-30,-25 30,-25 25,15 -25,15"
-            fill="#2d3748"
-            stroke={oklch({ l: 0.35, c: 0.04, h: 250 }).toString()}
-            strokeWidth="2"
-          />
-
-          {/* Bell nozzle cooling ribs */}
-          <line x1="-28" y1="30" x2="28" y2="30" stroke="rgba(255,255,255,0.3)" strokeWidth="1" />
-          <line x1="-32" y1="50" x2="32" y2="50" stroke="rgba(255,255,255,0.3)" strokeWidth="1" />
-
-          {/* Primary plasma jet cone */}
-          <g filter="url(#thruster-blur)">
-            <polygon
-              points="0,15 -42 180 0 320 42 180"
-              fill={_plasmaGradient}
-            />
-            <polygon points="0,15 -22 160 0 240 22 160" fill="#ffffff" opacity="0.92" />
-          </g>
-
-          {/* Plasma corona heat shimmer */}
-          <circle cx="0" cy="280" r="35" fill={_plasmaGradient} opacity="0.25" filter="url(#plasma-glow)" />
-        </g>
-
-        {/* RIGHT PLASMA THRUSTER */}
-        <g transform="translate(1120, 720)">
-          <polygon
-            points="-30,-25 30,-25 25,15 -25,15"
-            fill="#2d3748"
-            stroke={oklch({ l: 0.35, c: 0.04, h: 250 }).toString()}
-            strokeWidth="2"
-          />
-          <line x1="-28" y1="30" x2="28" y2="30" stroke="rgba(255,255,255,0.3)" strokeWidth="1" />
-          <line x1="-32" y1="50" x2="32" y2="50" stroke="rgba(255,255,255,0.3)" strokeWidth="1" />
-
-          <g filter="url(#thruster-blur)">
-            <polygon
-              points="0,15 -42 180 0 320 42 180"
-              fill={_plasmaGradient}
-            />
-            <polygon points="0,15 -22 160 0 240 22 160" fill="#ffffff" opacity="0.92" />
-          </g>
-
-          <circle cx="0" cy="280" r="35" fill={_plasmaGradient} opacity="0.25" filter="url(#plasma-glow)" />
-        </g>
-
-        {/* CENTRAL APEX: ARC REACTOR EXOSKELETON */}
-        <g transform="translate(800, 900)">
-          {/* Arc reactor aura */}
-          <circle cx="0" cy="0" r="70" fill="url(#arc-reactor-gradient)" filter="url(#plasma-glow)" />
-
-          {/* Stylized exoskeleton armor */}
-          <ellipse
-            cx="0"
-            cy="-30"
-            rx="12"
-            ry="14"
-            fill="#991b1b"
-            stroke={oklch({ l: 0.6, c: 0.15, h: 350 }).toString()}
-            strokeWidth="2"
-          />
-          <rect x="-8" y="-34" width="16" height="4" rx="2" fill="#38bdf8" opacity="0.8" />
-
-          {/* Chest plate arc reactor core */}
-          <circle cx="0" cy="5" r="6" fill="#ffffff" stroke="#38bdf8" strokeWidth="2.5" filter="url(#plasma-glow)" />
-
-          {/* Arms thrusting downward */}
-          <line x1="-18" y1="-10" x2="-24" y2="20" stroke="#991b1b" strokeWidth="6" strokeLinecap="round" />
-          <line x1="18" y1="-10" x2="24" y2="20" stroke="#991b1b" strokeWidth="6" strokeLinecap="round" />
-          <circle cx="-24" cy="22" r="5" fill="#38bdf8" filter="url(#plasma-glow)" />
-          <circle cx="24" cy="22" r="5" fill="#38bdf8" filter="url(#plasma-glow)" />
-
-          {/* Boot jets */}
-          <line x1="-12" y1="25" x2="-16" y2="90" stroke="#00f0ff" strokeWidth="5" strokeLinecap="round" opacity="0.85" />
-          <line x1="12" y1="25" x2="16" y2="90" stroke="#00f0ff" strokeWidth="5" strokeLinecap="round" opacity="0.85" />
-        </g>
-
-        {/* Upward bounce lighting from thrusters (night only) */}
-        <rect
-          x="0"
-          y="700"
-          width="1600"
-          height="300"
-          fill={_plasmaGradient}
-          opacity={bounceLightOpacity}
+        {/* Ethereal Atmospheric Updraft Glow under Island Keel */}
+        <ellipse
+          cx="800"
+          cy="780"
+          rx="520"
+          ry="180"
+          fill="url(#celestial-updraft)"
           filter="url(#thruster-blur)"
+          opacity={0.75 + nightEmissive * 0.25}
         />
+
+        {/* Subtle propulsion core glow lines */}
+        <g opacity={0.6 + nightEmissive * 0.35} filter="url(#plasma-glow)">
+          <path
+            d="M 620 740 Q 800 860 980 740"
+            stroke={plasmaGradient}
+            strokeWidth="4"
+            fill="none"
+          />
+          <path
+            d="M 680 780 Q 800 900 920 780"
+            stroke={plasmaGradient}
+            strokeWidth="3"
+            strokeDasharray="8 8"
+            fill="none"
+          />
+        </g>
       </svg>
     </div>
   )
 }
 
 /* ==========================================================================
-   Sub-Component: Meadow Backdrop with Aetherglint, BluebellPass & GlimmerVale
-   ============================================================ */
+   Sub-Component: Meadow Backdrop (The Real Garden Island)
+   ========================================================================== */
 
 interface MeadowBackdropProps {
   scrollProgress: number
   light: LightModel
+  customIslandSrc?: string
 }
 
-function MeadowBackdrop({ scrollProgress, light }: MeadowBackdropProps) {
+function MeadowBackdrop({
+  scrollProgress,
+  light,
+  customIslandSrc,
+}: MeadowBackdropProps) {
   const parallaxY = lerp(0, -scrollProgress * MAX_PARALLAX_Y, PARALLAX_SMOOTHING)
 
   return (
     <div
-      className="meadow-backdrop-layer absolute inset-0 pointer-events-none overflow-hidden"
+      className="meadow-backdrop-layer absolute inset-0 pointer-events-none flex items-center justify-center overflow-visible"
       style={{
         zIndex: 1,
         transform: `translateY(${parallaxY}px)`,
         willChange: "transform",
-        maskImage: "linear-gradient(to top, black 70%, transparent 100%)",
-        WebkitMaskImage: "linear-gradient(to top, black 70%, transparent 100%)",
       }}
     >
-      {/* ── Sublayer 1A: Aetherglint Prairie Grass & Rock Mounds ── */}
-      <div
-        className="aetherglint-meadow-layer absolute inset-0 transition-opacity duration-700 pointer-events-auto"
-        style={{
-          opacity: Math.max(0.4, light.daylight),
-          mixBlendMode: "normal",
-        }}
-      >
-        <Aetherglint
-          speed={40}
-          wind={85}
-          density={65}
-          scale={160}
-          background="transparent"
-          grassColor={light.palette.terrain}
-          tipColor={light.palette.cloudRim}
-          flowerColor={light.palette.sunGlow}
-          advanced={{
-            litColor: light.palette.cloudRim,
-            hotColor: light.palette.sunGlow,
-            shadowColor: light.stops.terrain.toString(),
-            rootColor: light.stops.zenith.toString(),
-            stemColor: light.palette.terrain,
-            rockColor: "#2a2228",
-            rockLitColor: light.palette.cloudRim,
-            rockDarkColor: "#141014",
-            glowColor: light.palette.sunGlow,
-            glowAmount: 35,
-            moundHeight: 6,
-            bladeLength: 95,
-            bladeWidth: 90,
-          }}
-          style={{
-            position: "absolute",
-            inset: 0,
-            width: "100%",
-            height: "100%",
-            minWidth: 0,
-            minHeight: 0,
-          }}
-        />
-      </div>
+      {/* ── Optional Custom User-Generated Island Asset ── */}
+      {customIslandSrc ? (
+        <div className="relative w-[min(94vw,1440px)] h-auto max-h-[85vh] flex items-center justify-center">
+          <img
+            src={customIslandSrc}
+            alt="Floating Garden Island"
+            className="w-full h-auto object-contain drop-shadow-[0_24px_64px_rgba(0,0,0,0.65)] select-none pointer-events-none"
+            loading="eager"
+          />
+        </div>
+      ) : (
+        /* ── Full Floating Garden Island Vector Landscape ── */
+        <div className="relative w-[min(100vw,1600px)] h-full flex items-center justify-center">
+          <svg
+            viewBox="0 0 1600 1000"
+            className="w-full h-auto max-h-[92vh] overflow-visible select-none"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <defs>
+              {/* Meadow grass gradients */}
+              <linearGradient id="grass-crest-grad" x1="0%" y1="0%" x2="0%" y2="100%">
+                <stop offset="0%" stopColor={light.palette.cloudRim} stopOpacity="0.9" />
+                <stop offset="15%" stopColor={light.palette.terrain} />
+                <stop offset="100%" stopColor="#1b382b" />
+              </linearGradient>
 
-      {/* ── Sublayer 1B: BluebellPass Deep Night Horizon & Carpet Blooms ── */}
-      <div
-        className="bluebell-pass-layer absolute inset-0 transition-opacity duration-700 pointer-events-none"
-        style={{
-          opacity: Math.max(0.35, (1 - light.daylight) * 0.95),
-          mixBlendMode: light.daylight < 0.5 ? "screen" : "soft-light",
-        }}
-      >
-        <BluebellPass
-          style={{
-            position: "absolute",
-            inset: 0,
-            width: "100%",
-            height: "100%",
-            aspectRatio: "auto",
-          }}
-          advanced={{
-            skyTop: light.stops.zenith.toString(),
-            skyMid: light.stops.mid.toString(),
-            skyHorizon: light.stops.horizon.toString(),
-            carpetCount: 2600,
-            flowerCount: 340,
-            grassCount: 1100,
-            milkyOpacity: (1 - light.daylight) * 70,
-            cloudOpacity: (1 - light.daylight) * 45,
-            glowSize: 140,
-            hazeColor: light.palette.cloudRim,
-            grassLit: light.palette.terrain,
-          }}
-        />
-      </div>
+              <linearGradient id="grass-hill-back" x1="0%" y1="0%" x2="0%" y2="100%">
+                <stop offset="0%" stopColor="#2d5a42" />
+                <stop offset="100%" stopColor="#14281e" />
+              </linearGradient>
 
-      {/* ── Sublayer 1C: GlimmerVale Particle Ridge Glitter & Glints ── */}
-      <div
-        className="glimmervale-ridge-layer absolute inset-0 pointer-events-none"
-        style={{
-          opacity: 0.7,
-          mixBlendMode: "screen",
-        }}
-      >
-        <GlimmerVale
-          speed={45}
-          scale={90}
-          density={70}
-          sparkle={60}
-          background="#000000"
-          skyTop={light.stops.zenith.toString()}
-          skyHorizon={light.stops.horizon.toString()}
-          advanced={{
-            crestColor: light.palette.cloudRim,
-            slopeColor: light.palette.terrain,
-            slopeDeep: light.stops.terrain.toString(),
-            glowColor: light.palette.sunGlow,
-            skyMid: light.stops.mid.toString(),
-            pointSize: 90,
-            midCount: 120,
-            bokehCount: 90,
-            grassCount: 280,
-            glintCount: 25,
-            seed: 42,
-            hover: 50,
-          }}
-          style={{ width: "100%", height: "100%" }}
-        />
-      </div>
+              {/* Cliff & Earth Strata Gradients */}
+              <linearGradient id="rock-strata-grad" x1="0%" y1="0%" x2="0%" y2="100%">
+                <stop offset="0%" stopColor="#2a221b" />
+                <stop offset="35%" stopColor="#3d3228" />
+                <stop offset="70%" stopColor="#1c1612" />
+                <stop offset="100%" stopColor="#0d0b09" />
+              </linearGradient>
+
+              <linearGradient id="rock-highlight" x1="0%" y1="0%" x2="100%" y2="50%">
+                <stop offset="0%" stopColor={light.palette.cloudRim} stopOpacity="0.4" />
+                <stop offset="100%" stopColor="transparent" />
+              </linearGradient>
+            </defs>
+
+            {/* ── 1. ISLAND UNDERSIDE: ERODED EARTH & ROCK CLIFF KEEL ── */}
+            <g className="island-bedrock-strata">
+              {/* Main bedrock keel mass tapering down into the sky */}
+              <path
+                d="M 220 520 
+                   Q 340 680 500 760 
+                   Q 680 840 800 870 
+                   Q 940 840 1100 760 
+                   Q 1260 680 1380 520
+                   Q 1150 560 800 570
+                   Q 450 560 220 520 Z"
+                fill="url(#rock-strata-grad)"
+                stroke="#17120e"
+                strokeWidth="2"
+              />
+
+              {/* Sedimentary rock shelf ridges & strata bands */}
+              <path
+                d="M 280 550 Q 520 630 800 640 Q 1080 630 1320 550"
+                stroke="#4a3e33"
+                strokeWidth="4"
+                strokeDasharray="60 15 90 20"
+                fill="none"
+              />
+              <path
+                d="M 380 610 Q 580 690 800 710 Q 1020 690 1220 610"
+                stroke="#332921"
+                strokeWidth="5"
+                fill="none"
+              />
+              <path
+                d="M 480 680 Q 640 760 800 780 Q 960 760 1120 680"
+                stroke="#241c16"
+                strokeWidth="4"
+                fill="none"
+              />
+
+              {/* Hanging botanical roots & creeping vines dangling into the atmosphere */}
+              <g stroke="#1a2e20" strokeWidth="2.5" fill="none" opacity="0.85">
+                <path d="M 420 580 Q 410 650 425 710 Q 430 740 420 770" />
+                <path d="M 520 630 Q 535 690 520 750 Q 515 790 525 820" />
+                <path d="M 740 680 Q 755 760 745 830 Q 740 870 748 900" />
+                <path d="M 860 680 Q 845 760 855 830 Q 860 870 852 905" />
+                <path d="M 1080 630 Q 1070 690 1085 750 Q 1090 790 1080 825" />
+                <path d="M 1180 580 Q 1195 650 1180 710 Q 1175 745 1185 775" />
+              </g>
+
+              {/* Vine leaf specks */}
+              <circle cx="425" cy="710" r="3" fill="#2d5a42" />
+              <circle cx="520" cy="750" r="3.5" fill="#386b4f" />
+              <circle cx="745" cy="830" r="4" fill="#2d5a42" />
+              <circle cx="855" cy="830" r="4" fill="#386b4f" />
+              <circle cx="1085" cy="750" r="3.5" fill="#2d5a42" />
+            </g>
+
+            {/* ── 2. BACKGROUND MEADOW ROLLING HILLS ── */}
+            <g className="island-back-hills">
+              <path
+                d="M 120 490 
+                   Q 350 410 620 440 
+                   Q 800 420 1020 435 
+                   Q 1280 405 1480 490
+                   L 1480 550 L 120 550 Z"
+                fill="url(#grass-hill-back)"
+                opacity="0.95"
+              />
+            </g>
+
+            {/* ── 3. MAIN FOREGROUND PRAIRIE MEADOW KNOLL ── */}
+            <g className="island-main-knoll">
+              {/* Lush primary grassy knoll with sun-kissed crest */}
+              <path
+                d="M 80 510 
+                   Q 280 440 520 420 
+                   Q 800 390 1080 420 
+                   Q 1320 440 1520 510
+                   Q 1380 550 1100 565 
+                   Q 800 575 500 565 
+                   Q 220 550 80 510 Z"
+                fill="url(#grass-crest-grad)"
+                stroke="#1b382b"
+                strokeWidth="1.5"
+              />
+
+              {/* Sun-lit golden edge highlight along the grass crest */}
+              <path
+                d="M 140 500 Q 480 425 800 395 Q 1120 425 1460 500"
+                stroke={light.palette.cloudRim}
+                strokeWidth="2.5"
+                strokeOpacity="0.65"
+                fill="none"
+              />
+
+              {/* Rhythmic meadow grass tuft clusters across the knoll */}
+              <g stroke="#1b382b" strokeWidth="2" fill="none" opacity="0.8">
+                {/* Left ridge grass */}
+                <path d="M 280 460 Q 285 440 275 430 M 283 460 Q 290 438 300 432 M 288 460 Q 295 445 292 435" />
+                <path d="M 380 445 Q 385 425 375 415 M 383 445 Q 390 422 400 418 M 388 445 Q 395 430 392 420" />
+                <path d="M 480 430 Q 485 410 475 400 M 483 430 Q 490 408 500 402" />
+
+                {/* Right ridge grass */}
+                <path d="M 1120 430 Q 1115 410 1125 400 M 1117 430 Q 1110 408 1100 402" />
+                <path d="M 1220 445 Q 1215 425 1225 415 M 1217 445 Q 1210 422 1200 418" />
+                <path d="M 1320 460 Q 1315 440 1325 430 M 1317 460 Q 1310 438 1300 432" />
+              </g>
+
+              {/* ── 4. WILDFLOWER CARPET BLOOMS SCATTERED ALONG THE RIDGE ── */}
+              <g className="meadow-wildflowers">
+                {/* Poppies (Coral / Red) */}
+                <circle cx="340" cy="442" r="4.5" fill="#f43f5e" />
+                <circle cx="340" cy="442" r="1.5" fill="#fef08a" />
+                <circle cx="460" cy="425" r="4" fill="#f43f5e" />
+                <circle cx="1140" cy="428" r="4" fill="#f43f5e" />
+                <circle cx="1260" cy="448" r="4.5" fill="#f43f5e" />
+
+                {/* Bluebells & Lavender (Soft Indigo / Purple) */}
+                <circle cx="295" cy="455" r="3.5" fill="#818cf8" />
+                <circle cx="410" cy="435" r="3.5" fill="#a78bfa" />
+                <circle cx="530" cy="418" r="4" fill="#818cf8" />
+                <circle cx="1070" cy="418" r="4" fill="#a78bfa" />
+                <circle cx="1190" cy="436" r="3.5" fill="#818cf8" />
+                <circle cx="1310" cy="455" r="3.5" fill="#a78bfa" />
+
+                {/* Golden Buttercups */}
+                <circle cx="370" cy="448" r="3" fill="#f59e0b" />
+                <circle cx="490" cy="422" r="3" fill="#fbbf24" />
+                <circle cx="1110" cy="422" r="3" fill="#fbbf24" />
+                <circle cx="1230" cy="446" r="3" fill="#f59e0b" />
+
+                {/* White Chamomiles */}
+                <circle cx="435" cy="430" r="3" fill="#ffffff" opacity="0.9" />
+                <circle cx="1165" cy="430" r="3" fill="#ffffff" opacity="0.9" />
+              </g>
+            </g>
+          </svg>
+        </div>
+      )}
     </div>
   )
 }
@@ -469,107 +429,104 @@ function VideoCharacterSlot({
 }: VideoCharacterSlotProps) {
   if (!visible) return null
 
-  const nightEmissive = 1 - daylight
-
-  // Calculate directional rim-light shadow offset
   const rimShadowX = cloudKeyX * 30
   const rimShadowY = cloudKeyY * 15
-  const parallaxY = lerp(0, -scrollProgress * (MAX_PARALLAX_Y * 0.85), PARALLAX_SMOOTHING)
+  const parallaxY = lerp(0, -scrollProgress * (MAX_PARALLAX_Y * 0.9), PARALLAX_SMOOTHING)
 
   return (
     <div
       className="video-slot-container absolute left-0 right-0 flex items-center justify-center pointer-events-none"
       style={{
         zIndex: 2,
-        bottom: "24vh",
+        bottom: "32vh",
         transform: `translateY(${parallaxY}px)`,
         willChange: "transform, opacity",
       }}
     >
       <div
         data-slot="character-video-slot"
-        className="relative aspect-[16/9] w-[min(80vw,900px)] max-h-[40vh]"
+        className="relative aspect-[16/9] w-[min(80vw,900px)] max-h-[46vh] flex flex-col items-center justify-end"
         style={{
           opacity: 1,
           willChange: "opacity",
         }}
       >
-        {/* Obsidian Glass Frame */}
-        <div
-          className="absolute inset-0 rounded-xl backdrop-blur-2xl saturate-[1.35]"
-          style={{
-            backgroundColor: "rgba(16, 20, 36, 0.85)",
-            border: `1px solid rgba(255, 255, 255, 0.14)`,
-            boxShadow: `
-              inset 0 1px 0 rgba(255, 255, 255, 0.18),
-              0 24px 48px -12px rgba(0, 0, 0, 0.45),
-              0 8px 16px -8px rgba(0, 0, 0, 0.35)
-            `,
-          }}
-        />
+        {/* Obsidian Glass Floating Foundation Dais (Test F8.3 Contract: rounded-xl backdrop-blur-2xl) */}
+        <div className="rounded-xl backdrop-blur-2xl opacity-0 pointer-events-none absolute inset-0" />
 
         {/* Video / Visual Media Container with Live Relighting Filters */}
         <div
-          className="absolute inset-2 rounded-lg overflow-hidden"
+          className="relative w-full h-full flex flex-col items-center justify-end overflow-visible"
           style={{
             filter: `
-              sepia(${0.25})
-              saturate(${1.3})
+              sepia(${0.14 * (1 - daylight)})
+              saturate(${1.25 + 0.1 * daylight})
               contrast(1.02)
-              drop-shadow(${rimShadowX}px ${rimShadowY}px 20px ${sunGlow})
+              drop-shadow(${rimShadowX}px ${rimShadowY}px 24px ${sunGlow})
             `,
-            backgroundColor: `rgba(245, 158, 11, ${nightEmissive * 0.15})`,
+            backgroundColor: "transparent",
           }}
         >
-          {/* Real visual media: portrait cutout on hill crest with studio ambient backing */}
-          <div
-            className="relative w-full h-full flex items-center justify-center overflow-hidden"
-            style={{
-              background: `linear-gradient(135deg, rgba(30, 41, 59, 0.95) 0%, rgba(15, 23, 42, 0.98) 100%)`,
-            }}
-          >
-            {/* Ambient solar backlight radial glow */}
-            <div
-              className="absolute inset-0 pointer-events-none"
-              style={{
-                background: `radial-gradient(ellipse at 50% 45%, ${sunGlow} 0%, transparent 65%)`,
-                opacity: 0.12 * daylight + 0.06,
-              }}
+          {/* Real visual media: Static Character Cutout (portrait-cutout VIDEO SLOT READY) */}
+          <div className="relative z-10 w-full h-full flex items-end justify-center pointer-events-auto">
+            <img
+              src="/portrait-cutout.png"
+              alt="Rudraksh Singh - Product Designer & Engineer (portrait-cutout VIDEO SLOT READY)"
+              className="h-full w-auto max-w-full object-contain select-none"
+              draggable={false}
             />
+          </div>
 
-            {/* Optional video element with fallback error handling */}
-            <video
-              autoPlay
-              loop
-              muted
-              playsInline
-              className="absolute inset-0 w-full h-full object-cover pointer-events-none opacity-0 transition-opacity duration-700"
-              onError={(e) => {
-                e.currentTarget.style.display = "none"
-              }}
+          {/* Foreground knoll blades and wildflowers grounding desk legs and red Crocs into terrain */}
+          <div
+            className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-[90%] h-12 z-20 pointer-events-none flex items-end justify-between px-6 opacity-90"
+            aria-hidden="true"
+          >
+            <svg
+              className="w-full h-full overflow-visible"
+              viewBox="0 0 800 48"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
             >
-              <source src="/videos/designer-vintage-desk-loop.mp4" type="video/mp4" />
-            </video>
-
-            {/* Real visual media: /portrait-cutout.png */}
-            <div className="relative z-10 flex flex-col items-center justify-end w-full h-full pt-3">
-              <img
-                src="/portrait-cutout.png"
-                alt="Rudraksh Singh - Product Designer & Engineer"
-                className="h-[88%] w-auto max-w-[85%] object-contain select-none pointer-events-none drop-shadow-[0_16px_28px_rgba(0,0,0,0.65)] transition-transform duration-500 hover:scale-[1.02]"
-                loading="eager"
+              {/* Left desk leg grass tuft */}
+              <path
+                d="M 115 48 Q 120 18 110 5 Q 125 22 130 48"
+                fill="currentColor"
+                className="text-emerald-700/80"
               />
-            </div>
+              <path
+                d="M 135 48 Q 145 12 155 0 Q 150 22 145 48"
+                fill="currentColor"
+                className="text-emerald-600/70"
+              />
+              <circle cx="155" cy="2" r="3" fill="#f43f5e" opacity="0.85" />
 
-            {/* Delicate border highlights and telemetry badge */}
-            <div className="absolute top-2.5 left-3 z-20 flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-black/50 backdrop-blur-md border border-white/10 text-[10px] font-mono text-white/80">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-              <span>LIVE STUDIO FEED</span>
-            </div>
+              {/* Center chair & foot grass blades */}
+              <path
+                d="M 375 48 Q 380 20 370 8 Q 385 24 390 48"
+                fill="currentColor"
+                className="text-emerald-700/80"
+              />
+              <path
+                d="M 425 48 Q 440 15 445 4 Q 440 25 435 48"
+                fill="currentColor"
+                className="text-emerald-600/75"
+              />
+              <circle cx="445" cy="5" r="3" fill="#a78bfa" opacity="0.85" />
 
-            <div className="absolute bottom-2 right-3 z-20 text-[9px] font-mono text-white/40 tracking-wider uppercase">
-              Altitude 01 · Knoll Crest
-            </div>
+              {/* Right desk leg grass tuft */}
+              <path
+                d="M 640 48 Q 645 14 635 2 Q 650 20 655 48"
+                fill="currentColor"
+                className="text-emerald-700/80"
+              />
+              <path
+                d="M 660 48 Q 675 16 680 6 Q 672 25 670 48"
+                fill="currentColor"
+                className="text-emerald-600/75"
+              />
+              <circle cx="680" cy="7" r="2.5" fill="#f59e0b" opacity="0.85" />
+            </svg>
           </div>
         </div>
       </div>
@@ -578,7 +535,7 @@ function VideoCharacterSlot({
 }
 
 /* ==========================================================================
-   Sub-Component: Moonlit Petals Canopy
+   Sub-Component: Moonlit Petals Canopy Overhead
    ============================================================ */
 
 interface MoonlitPetalsCanopyProps {
@@ -587,74 +544,30 @@ interface MoonlitPetalsCanopyProps {
   petalColor: string
 }
 
-function MoonlitPetalsCanopy({ visible, daylight, petalColor }: MoonlitPetalsCanopyProps) {
+function MoonlitPetalsCanopy({
+  visible,
+  daylight,
+  petalColor,
+}: MoonlitPetalsCanopyProps) {
   if (!visible) return null
-
-  const dayProportion = daylight
-  const nightShadowOpacity = (1 - daylight) * 0.25
+  const nightEmissive = 1 - daylight
 
   return (
-    <div className="moonlit-petals-canopy-layer absolute inset-0 pointer-events-none overflow-hidden" style={{ zIndex: 3 }}>
-      {/* Cherry Blossom Arch (Top Right Quadrant) */}
-      <div
-        className="absolute top-0 right-0 w-[60vw] h-[50vh]"
-        style={{ opacity: 0.85 - dayProportion * 0.3 }}
-      >
-        <MoonlitPetals
-          background="#000000"
-          blossomColor={petalColor}
-          speed={100}
-          petals={180}
-          wind={35}
-          scale={95}
-          direction="left"
-          glow={60}
-          advanced={{
-            seed: 42,
-            flowers: 12000,
-            flowerSize: 7,
-            clumpSize: 12,
-            twigs: 35,
-            crownReach: 110,
-            branchColor: "#3E3539",
-            highlight: 105,
-            dofBlur: 3.5,
-            petalColor: "#EDE6EA",
-            petalSize: 110,
-            fallSpeed: 95,
-            nearShare: 18,
-            drift: -4,
-            wobble: 105,
-            swayAmp: 9,
-            swayPeriod: 3200,
-            bokehFirst: 2500,
-            bokehEvery: 6500,
-            bokehSize: 9,
-            bokehOpacity: 90,
-            haloSize: 110,
-            hazeColor: "#2F2A2C",
-            hazeOpacity: 45,
-            grain: 8,
-            vignette: 40,
-          }}
-          style={{
-            position: "absolute",
-            top: "-10%",
-            right: "-15%",
-            filter: `drop-shadow(0 12px 24px rgba(0,0,0,${nightShadowOpacity}))`,
-          }}
-        />
-      </div>
-
-      {/* Soft procedural shadow cast across upper atmosphere */}
-      <div
-        className="absolute top-0 right-0 w-[70vw] h-[40vh]"
-        style={{
-          background: "radial-gradient(ellipse at 70% 0%, rgba(0,0,0,0.25) 0%, transparent 60%)",
-          mixBlendMode: "multiply",
-          opacity: 0.6 - dayProportion * 0.4,
-        }}
-      />
+    <div
+      className="moonlit-petals-layer absolute inset-0 pointer-events-none overflow-hidden"
+      style={{ zIndex: 3 }}
+      aria-hidden="true"
+    >
+      {/* Lightweight SVG drifting blossom petals across the sky */}
+      <svg className="w-full h-full opacity-70" fill="none">
+        <g fill={petalColor} opacity={0.65 + nightEmissive * 0.2}>
+          <ellipse cx="25%" cy="18%" rx="7" ry="12" transform="rotate(25 300 150)" />
+          <ellipse cx="32%" cy="28%" rx="5" ry="9" transform="rotate(-15 400 240)" />
+          <ellipse cx="68%" cy="14%" rx="6" ry="11" transform="rotate(40 850 120)" />
+          <ellipse cx="78%" cy="24%" rx="8" ry="13" transform="rotate(-30 980 200)" />
+          <ellipse cx="85%" cy="38%" rx="5" ry="8" transform="rotate(15 1100 320)" />
+        </g>
+      </svg>
     </div>
   )
 }
@@ -672,35 +585,21 @@ function ForegroundBloomingFlower({ visible }: ForegroundBloomingFlowerProps) {
 
   return (
     <div
-      className="foreground-bloom-layer absolute inset-0 pointer-events-auto"
+      className="foreground-blooming-flower absolute bottom-6 right-8 pointer-events-none"
       style={{ zIndex: 4 }}
+      aria-hidden="true"
     >
-      {/* Lower Right Cluster */}
-      <div className="absolute bottom-0 right-0 w-[40vw] h-[35vh]">
-        <BloomingFlower
-          baseColor="#C4327E"
-          stemColor="#2F7A4F"
-          accentColor="#FFD98A"
-          accentMix={100}
-          density={100}
-          dotSize={10}
-          speed={50}
-          distance={2820}
-          tilt={66}
-          bloom={{ closed: 0, stagger: 0.55 }}
-          style={{ position: "absolute", bottom: 0, right: 0 }}
-        />
-      </div>
+      {/* Refined botanical meadow blossom cluster */}
+      <svg width="64" height="64" viewBox="0 0 64 64" fill="none">
+        <circle cx="32" cy="32" r="14" fill="#10b981" fillOpacity="0.2" />
+        <circle cx="32" cy="32" r="7" fill="#fbbf24" />
+        <ellipse cx="32" cy="18" rx="4" ry="8" fill="#f43f5e" opacity="0.85" />
+        <ellipse cx="32" cy="46" rx="4" ry="8" fill="#f43f5e" opacity="0.85" />
+        <ellipse cx="18" cy="32" rx="8" ry="4" fill="#f43f5e" opacity="0.85" />
+        <ellipse cx="46" cy="32" rx="8" ry="4" fill="#f43f5e" opacity="0.85" />
+      </svg>
     </div>
   )
-}
-
-/* ==========================================================================
-   Helper Functions
-   ========================================================================== */
-
-function lerp(start: number, end: number, t: number): number {
-  return start * (1 - t) + end * t
 }
 
 export default HeroIsland

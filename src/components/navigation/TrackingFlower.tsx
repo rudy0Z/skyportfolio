@@ -104,13 +104,21 @@ export function TrackingFlower({
       if (!Number.isFinite(currentTiltX)) currentTiltX = 0;
       if (!Number.isFinite(currentTiltY)) currentTiltY = 0;
 
-      setOffset({
-        x: currentX,
-        y: currentY,
-        tiltX: currentTiltX,
-        tiltY: currentTiltY,
-        distance: targetDist,
-      });
+      const delta =
+        Math.abs(targetX - currentX) +
+        Math.abs(targetY - currentY) +
+        Math.abs(targetTiltX - currentTiltX) +
+        Math.abs(targetTiltY - currentTiltY);
+
+      if (delta > 0.02) {
+        setOffset({
+          x: currentX,
+          y: currentY,
+          tiltX: currentTiltX,
+          tiltY: currentTiltY,
+          distance: targetDist,
+        });
+      }
 
       rafId = requestAnimationFrame(tick);
     };
